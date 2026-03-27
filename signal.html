@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>signal.html</title>
+<!-- 
+  ここまで来たのか。
+
+  最後の扉は terminal.html にある。
+  だが入るには、この頁に隠された言葉が必要だ。
+  
+  鏡を見ろ。
+-->
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060608;
+    --fg: #c0b8d0;
+    --fg-dim: #504860;
+    --fg-bright: #e8e0ff;
+    --accent: #6040c0;
+    --red: #c04060;
+    --mono: 'Share Tech Mono', monospace;
+    --serif: 'Noto Serif JP', serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* 静的ノイズ背景 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.6;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 60px 30px 100px;
+  }
+
+  /* 鏡エフェクト: メインビジュアル */
+  .mirror-frame {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 48px;
+    border: 1px solid var(--fg-dim);
+    position: relative;
+    overflow: hidden;
+    background: #0a080f;
+    aspect-ratio: 3/4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .mirror-frame::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(100, 80, 180, 0.08) 0%,
+      transparent 40%,
+      rgba(100, 80, 180, 0.04) 100%
+    );
+    pointer-events: none;
+  }
+
+  .mirror-frame::after {
+    content: '鏡を見ろ';
+    font-family: var(--serif);
+    font-size: 12px;
+    color: var(--fg-dim);
+    letter-spacing: 0.2em;
+    position: absolute;
+    bottom: 12px;
+    width: 100%;
+    text-align: center;
+  }
+
+  /* 鏡の中のテキスト（反転） */
+  .mirror-text {
+    color: var(--accent);
+    font-size: 18px;
+    letter-spacing: 0.15em;
+    transform: scaleX(-1); /* 鏡文字 */
+    opacity: 0.4;
+    transition: opacity 0.5s, color 0.5s;
+    text-align: center;
+    line-height: 1.6;
+    padding: 20px;
+    word-break: break-all;
+    pointer-events: none;
+  }
+
+  /* ホバー / クリックで鮮明になる */
+  .mirror-frame:hover .mirror-text,
+  .mirror-frame.activated .mirror-text {
+    opacity: 1;
+    color: var(--fg-bright);
+  }
+
+  .mirror-frame.activated .mirror-text {
+    transform: scaleX(1); /* 正像に戻る */
+    color: var(--red);
+    animation: pulse 2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* テキストコンテンツ */
+  h1 {
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    color: var(--fg-dim);
+    margin-bottom: 40px;
+    font-weight: normal;
+  }
+
+  .section-title {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--fg-dim);
+    margin-bottom: 16px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--fg-dim);
+  }
+
+  p {
+    margin-bottom: 16px;
+    color: var(--fg);
+    font-family: var(--serif);
+    font-size: 13px;
+    line-height: 2;
+  }
+
+  /* グリッチテキスト */
+  .glitch {
+    position: relative;
+    display: inline-block;
+  }
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+  .glitch::before {
+    color: #ff0040;
+    animation: glitch-1 3s infinite;
+    clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+    opacity: 0.7;
+  }
+  .glitch::after {
+    color: #00ffff;
+    animation: glitch-2 3s infinite;
+    clip-path: polygon(0 66%, 100% 66%, 100% 100%, 0 100%);
+    opacity: 0.7;
+  }
+  @keyframes glitch-1 {
+    0%, 90%, 100% { transform: none; }
+    92% { transform: translateX(-3px); }
+    94% { transform: translateX(3px); }
+    96% { transform: translateX(-2px); }
+  }
+  @keyframes glitch-2 {
+    0%, 90%, 100% { transform: none; }
+    93% { transform: translateX(3px); }
+    95% { transform: translateX(-3px); }
+  }
+
+  /* 記録ボックス */
+  .record {
+    border: 1px solid var(--fg-dim);
+    padding: 20px;
+    margin: 24px 0;
+    position: relative;
+  }
+  .record::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -8px;
+    left: 12px;
+    background: var(--bg);
+    padding: 0 8px;
+    font-size: 10px;
+    color: var(--fg-dim);
+    letter-spacing: 0.12em;
+  }
+
+  .record p {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-dim);
+    line-height: 1.8;
+  }
+
+  .record p.highlight {
+    color: var(--fg-bright);
+  }
+
+  /* 隠しメッセージ（ページソース用） */
+  .source-only {
+    display: none;
+  }
+
+  /* terminal リンク */
+  .terminal-door {
+    display: none;
+    margin-top: 40px;
+    padding: 24px;
+    border: 1px solid var(--red);
+    text-align: center;
+    animation: doorPulse 2s ease infinite;
+  }
+  .terminal-door.open { display: block; }
+
+  @keyframes doorPulse {
+    0%, 100% { border-color: var(--red); box-shadow: 0 0 10px rgba(192,64,96,0.2); }
+    50%       { border-color: rgba(192,64,96,0.4); box-shadow: none; }
+  }
+
+  .terminal-door p {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--fg-dim);
+    margin-bottom: 16px;
+  }
+
+  .terminal-door .pass-display {
+    font-size: 20px;
+    color: var(--red);
+    letter-spacing: 0.3em;
+    margin: 16px 0;
+  }
+
+  .terminal-door a {
+    display: inline-block;
+    border: 1px solid var(--red);
+    color: var(--fg-bright);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 10px 28px;
+    text-decoration: none;
+    letter-spacing: 0.15em;
+    transition: all 0.2s;
+  }
+  .terminal-door a:hover {
+    background: var(--red);
+    color: var(--bg);
+  }
+
+  /* フッター */
+  .page-footer {
+    margin-top: 60px;
+    font-size: 10px;
+    color: var(--fg-dim);
+    text-align: center;
+    letter-spacing: 0.1em;
+  }
+
+  /* ページロードアニメーション */
+  .container {
+    animation: fadeUp 1.5s ease forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+<!-- この頁のパスワードは鏡の中にある: MIRROR -->
+
+<div class="container">
+
+  <h1>signal.html — <span class="glitch" data-text="未分類">未分類</span> / UNCLASSIFIED</h1>
+
+  <!-- 鏡フレーム -->
+  <div class="mirror-frame" id="mirror-frame">
+    <!-- 鏡文字 — 反転されているので通常は読みにくい。クリックで正像になる -->
+    <div class="mirror-text" id="mirror-text">MIRROR<br>———<br>次の鍵</div>
+  </div>
+
+  <div class="section-title">▎ このファイルについて</div>
+
+  <p>
+    あなたが持っているファイルが何か、もうわかっているはずだ。<br>
+    第八報告書は嘘だ。終結なんてしていない。
+  </p>
+
+  <div class="record" data-label="RECORD: 流田千尋（006）— 未公開メモ">
+    <p>流田千尋は行方不明になる前日、研究施設に手紙を残していた。</p>
+    <p>その手紙は担当官によって「精神的不安定による妄言」として処理され、記録から除外された。</p>
+    <p class="highlight">内容（複製）：</p>
+    <p class="highlight">
+      「あれは鏡を通して来る。<br>
+      再現サイトを作った瞬間、向こうに扉を開けたのと同じだ。<br>
+      制圧したと思っているなら、もう一度考えろ。<br>
+      あれが消えるはずがない。あれはもともと、ここにいなかったんだから。」
+    </p>
+  </div>
+
+  <p>
+    SIGNAL_DATA_02 の逆再生で聴こえた言葉——<br>
+    「signal.html にある」というのは、このページのことではない。<br>
+    このページにある<strong>言葉</strong>のことだ。
+  </p>
+
+  <div class="record" data-label="HINT">
+    <p>鏡を見ろ。</p>
+    <p>鏡の中にしか映らないものがある。</p>
+    <p>それをそのまま terminal に持っていけ。</p>
+  </div>
+
+  <!-- 鏡クリック後に出現する最終扉 -->
+  <div class="terminal-door" id="terminal-door">
+    <p>— 鏡が正像を返した —</p>
+    <p>terminal へのパスワードは:</p>
+    <div class="pass-display" id="pass-display">MIRROR</div>
+    <p style="font-size:11px; margin-bottom: 20px;">最後の扉:</p>
+    <a href="terminal.html">▶ terminal.html を開く</a>
+  </div>
+
+  <div class="page-footer">signal.html — ██████機関 非公式記録 — 複製禁止</div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────
+// 鏡インタラクション
+// クリック → 正像表示 → パスワード扉出現
+// ─────────────────────────────────────
+(function initMirror() {
+  const frame = document.getElementById('mirror-frame');
+  const text  = document.getElementById('mirror-text');
+  const door  = document.getElementById('terminal-door');
+  let activated = false;
+
+  frame.addEventListener('click', () => {
+    if (activated) return;
+    activated = true;
+    frame.classList.add('activated');
+
+    // 不穏SE
+    playMirrorSound();
+
+    // グリッチ演出後に扉を開く
+    setTimeout(() => {
+      door.classList.add('open');
+      door.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 1200);
+  });
+})();
+
+// 鏡クリック時のSE
+function playMirrorSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // ガラスが割れる/ひびが入るような音
+    const bufLen = ctx.sampleRate * 1.5;
+    const buffer = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufLen; i++) {
+      const t = i / ctx.sampleRate;
+      // 高周波ノイズ + 減衰
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 5) * 0.3;
+      // 低周波共鳴
+      data[i] += Math.sin(2 * Math.PI * 200 * t) * Math.exp(-t * 3) * 0.1;
+    }
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 3000;
+    filter.Q.value = 0.5;
+
+    const gain = ctx.createGain();
+    gain.gain.value = 0.5;
+
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start();
+  } catch(e) {}
+}
+
+// ─────────────────────────────────────
+// アンビエントSE（ページ訪問時）
+// ─────────────────────────────────────
+(function initAmbient() {
+  let started = false;
+
+  function start() {
+    if (started) return;
+    started = true;
+
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // ドローン
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 55;
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 3);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 15);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 15);
+    } catch(e) {}
+  }
+
+  document.addEventListener('click', start, { once: true });
+  document.addEventListener('scroll', start, { once: true });
+})();
+</script>
+</body>
+</html>

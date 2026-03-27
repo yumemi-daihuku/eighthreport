@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TERMINAL_08</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #020202;
+    --fg: #e8e0e0;
+    --red: #ff2040;
+    --red-dim: #601020;
+    --mono: 'Share Tech Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    min-height: 100vh;
+    overflow: hidden; /* 初期状態ではスクロール不可 */
+  }
+
+  /* ─────────────── GATE (パスワード画面) ─────────────── */
+  #gate {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  #gate .gate-label {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: #404040;
+    margin-bottom: 8px;
+  }
+
+  #gate .gate-title {
+    font-size: 20px;
+    letter-spacing: 0.2em;
+    color: var(--red);
+    margin-bottom: 24px;
+    animation: gateGlitch 4s ease infinite;
+  }
+
+  @keyframes gateGlitch {
+    0%, 88%, 100% { opacity: 1; text-shadow: none; }
+    90% { opacity: 0.8; text-shadow: 2px 0 var(--red), -2px 0 #00ffff; }
+    92% { opacity: 1; text-shadow: -2px 0 var(--red); }
+  }
+
+  #gate input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #333;
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 18px;
+    letter-spacing: 0.3em;
+    text-align: center;
+    padding: 8px 16px;
+    outline: none;
+    width: 260px;
+    text-transform: uppercase;
+  }
+
+  #gate input::placeholder { color: #333; }
+
+  #gate .gate-hint {
+    font-size: 10px;
+    color: #333;
+    letter-spacing: 0.1em;
+  }
+
+  #gate-error {
+    color: var(--red);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    opacity: 0;
+    transition: opacity 0.3s;
+    height: 1.2em;
+  }
+  #gate-error.show { opacity: 1; }
+
+  /* カーソル点滅 */
+  #gate input:focus { border-bottom-color: var(--red); }
+
+  /* ─────────────── MAIN CONTENT ─────────────── */
+  #main {
+    display: none;
+    padding: 60px 30px 100px;
+    max-width: 720px;
+    margin: 0 auto;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+  }
+
+  #main.visible {
+    display: block;
+    opacity: 1;
+  }
+
+  body.unlocked { overflow: auto; }
+
+  /* テキストライン（タイプライター） */
+  .line {
+    opacity: 0;
+    white-space: pre-wrap;
+    word-break: break-all;
+    min-height: 1.8em;
+  }
+  .line.show { opacity: 1; }
+  .line.red   { color: var(--red); }
+  .line.dim   { color: #404040; }
+  .line.bright { color: #fff; }
+  .line.large {
+    font-size: 20px;
+    letter-spacing: 0.15em;
+    line-height: 1.4;
+    margin: 8px 0;
+  }
+
+  hr.t {
+    border: none;
+    border-top: 1px solid #222;
+    margin: 24px 0;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  hr.t.show { opacity: 1; }
+
+  /* 最終メッセージブロック */
+  .final-block {
+    margin-top: 40px;
+    padding: 28px;
+    border: 1px solid var(--red-dim);
+    opacity: 0;
+    transition: opacity 1s ease, border-color 2s ease;
+    position: relative;
+  }
+  .final-block.show {
+    opacity: 1;
+    border-color: var(--red);
+    box-shadow: 0 0 30px rgba(255,32,64,0.1);
+  }
+  .final-block p {
+    font-size: 13px;
+    color: var(--fg);
+    line-height: 2.2;
+    margin-bottom: 12px;
+  }
+  .final-block .signature {
+    margin-top: 24px;
+    font-size: 11px;
+    color: #404040;
+    border-top: 1px solid #222;
+    padding-top: 12px;
+  }
+
+  /* エンドクレジット風 */
+  .credit {
+    margin-top: 60px;
+    font-size: 10px;
+    color: #222;
+    letter-spacing: 0.1em;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 2s ease;
+  }
+  .credit.show { opacity: 1; }
+
+  /* スクロールバー */
+  ::-webkit-scrollbar { width: 2px; }
+  ::-webkit-scrollbar-thumb { background: #222; }
+
+  /* 点滅カーソル */
+  .cursor::after {
+    content: '█';
+    animation: blink 1s step-end infinite;
+    color: var(--red);
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<!-- ─────── GATE ─────── -->
+<div id="gate">
+  <div class="gate-label">TERMINAL_08 — ██████ FINAL NODE</div>
+  <div class="gate-title">ACCESS REQUIRED</div>
+  <input
+    type="text"
+    id="gate-input"
+    placeholder="ENTER CODE"
+    maxlength="20"
+    autocomplete="off"
+    spellcheck="false"
+  >
+  <div id="gate-error">— ACCESS DENIED —</div>
+  <div class="gate-hint">signal.html に鍵がある</div>
+</div>
+
+<!-- ─────── MAIN ─────── -->
+<div id="main">
+
+  <div class="line dim"   id="t0">TERMINAL_08 // AUTHORIZED ACCESS</div>
+  <div class="line dim"   id="t1">SESSION: ████████ // VERIFIED</div>
+  <hr class="t" id="r0">
+
+  <div class="line red"   id="t2">&gt; 警告: このファイルは正式な記録ではない。</div>
+  <div class="line red"   id="t3">&gt; 本ファイルを作成した調査員は現在「行方不明」として処理されている。</div>
+  <hr class="t" id="r1">
+
+  <div class="line bright" id="t4">■ 真実の記録</div>
+  <br>
+  <div class="line" id="t5">第七報告書は本物だった。</div>
+  <div class="line" id="t6">第八報告書は、あれが書かせた。</div>
+  <br>
+  <div class="line" id="t7">「制圧」「無害化」「所在確認済」——</div>
+  <div class="line" id="t8">これらは全て、あれが人間に書かせた言葉だ。</div>
+  <div class="line" id="t9">目的は一つ: より多くの人間を「安全だと思わせて」閲覧させること。</div>
+  <br>
+  <div class="line red" id="t10">&gt; 再現サイトは無害じゃない。</div>
+  <div class="line red" id="t11">&gt; 感染は今も続いている。</div>
+  <div class="line red" id="t12">&gt; あなたもその一人だ。</div>
+  <hr class="t" id="r2">
+
+  <div class="line bright" id="t13">■ 008番について</div>
+  <br>
+  <div class="line" id="t14">第八報告書の表に、008番の欄がある。</div>
+  <div class="line" id="t15">名前は伏字。「記録なし」と書かれている。</div>
+  <br>
+  <div class="line" id="t16">008番は調査員だった。</div>
+  <div class="line" id="t17">再現サイトを作ることを最後まで反対した一人。</div>
+  <div class="line" id="t18">「扉を作るな」と言い続けた。</div>
+  <br>
+  <div class="line red" id="t19">&gt; 008番はこのターミナルを作った人物と同一人物だ。</div>
+  <div class="line red" id="t20">&gt; このファイルがあなたに届いているなら、</div>
+  <div class="line red" id="t21">&gt; 私はもう、こちら側にいる。</div>
+  <hr class="t" id="r3">
+
+  <!-- 最終メッセージ -->
+  <div class="final-block" id="final-block">
+    <p>あれは「接触」によって伝播する。</p>
+    <p>閲覧、聴取、読書——媒体は問わない。</p>
+    <p>この文章を読んだあなたは、もう知っている。</p>
+    <p>知ることそのものが、接触だから。</p>
+    <br>
+    <p>逃げ場はない。あれを「知った」人間に、知る前には戻れない。</p>
+    <p>唯一の方法は——</p>
+    <p class="large">忘れること。</p>
+    <p>だが、あれはそれを許さない。</p>
+    <br>
+    <p>鏡を見るな。<br>
+    水面を見るな。<br>
+    画面を見るな。</p>
+    <br>
+    <p style="font-size:11px; color:#404040;">……もう遅いかもしれないが。</p>
+    <div class="signature">
+      — 調査員 008 / ████ ████<br>
+      最終書込: 20██/██/██ 03:17<br>
+      この後、応答なし
+    </div>
+  </div>
+
+  <div class="credit" id="credit">
+    UR-2-L-A-T-E // CASE STATUS: UNKNOWN<br>
+    ██████機関 は存在しない<br>
+    <br>
+    <a href="https://yumemi-daihuku.github.io/seventhreport/" style="color:#333; text-decoration:none;">最初に戻る</a>
+  </div>
+
+  <div class="line dim cursor" id="cursor" style="margin-top:32px;"> </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────
+// GATE: パスワード認証
+// 正解: MIRROR (signal.html の鏡から)
+// ─────────────────────────────────────
+(function initGate() {
+  const input = document.getElementById('gate-input');
+  const error = document.getElementById('gate-error');
+  const gate  = document.getElementById('gate');
+  const main  = document.getElementById('main');
+
+  input.focus();
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const val = input.value.trim().toUpperCase();
+
+    if (val === 'MIRROR') {
+      // 正解: ゲートをフェードアウトしてメインを表示
+      gate.style.transition = 'opacity 1s ease';
+      gate.style.opacity = '0';
+
+      playUnlockSound();
+
+      setTimeout(() => {
+        gate.style.display = 'none';
+        document.body.classList.add('unlocked');
+        main.style.display = 'block';
+        // 少し待ってフェードイン → タイプライター開始
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            main.classList.add('visible');
+            startTypewriter();
+          });
+        });
+      }, 1000);
+    } else {
+      // 不正解
+      error.classList.add('show');
+      input.value = '';
+      input.style.borderBottomColor = '#ff2040';
+      playDenySound();
+      setTimeout(() => {
+        error.classList.remove('show');
+        input.style.borderBottomColor = '#333';
+      }, 2000);
+    }
+  });
+})();
+
+// ─────────────────────────────────────
+// タイプライター: 順番に各要素を表示
+// ─────────────────────────────────────
+function startTypewriter() {
+  const seq = [
+    { id: 't0',           delay: 300 },
+    { id: 't1',           delay: 600 },
+    { id: 'r0',           delay: 900 },
+    { id: 't2',           delay: 1200 },
+    { id: 't3',           delay: 1600 },
+    { id: 'r1',           delay: 2000 },
+    { id: 't4',           delay: 2400 },
+    { id: 't5',           delay: 2900 },
+    { id: 't6',           delay: 3400 },
+    { id: 't7',           delay: 4000 },
+    { id: 't8',           delay: 4500 },
+    { id: 't9',           delay: 5000 },
+    { id: 't10',          delay: 5600 },
+    { id: 't11',          delay: 6000 },
+    { id: 't12',          delay: 6400 },
+    { id: 'r2',           delay: 6800 },
+    { id: 't13',          delay: 7200 },
+    { id: 't14',          delay: 7700 },
+    { id: 't15',          delay: 8100 },
+    { id: 't16',          delay: 8700 },
+    { id: 't17',          delay: 9100 },
+    { id: 't18',          delay: 9500 },
+    { id: 't19',          delay: 10100 },
+    { id: 't20',          delay: 10600 },
+    { id: 't21',          delay: 11100 },
+    { id: 'r3',           delay: 11600 },
+    { id: 'final-block',  delay: 12200 },
+    { id: 'credit',       delay: 18000 },
+    { id: 'cursor',       delay: 18500 },
+  ];
+
+  seq.forEach(({ id, delay }) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('show');
+    }, delay);
+  });
+
+  // クライマックスSE
+  setTimeout(() => { playFinalSound(); }, 12000);
+}
+
+// ─────────────────────────────────────
+// SE 群
+// ─────────────────────────────────────
+function playUnlockSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // 低く暗い音が「開く」感じ
+    [80, 100, 120].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.2);
+      gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + i * 0.2 + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.2 + 1.0);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.2);
+      osc.stop(ctx.currentTime + i * 0.2 + 1.0);
+    });
+  } catch(e) {}
+}
+
+function playDenySound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 60;
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } catch(e) {}
+}
+
+function playFinalSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // 長い不穏ドローン
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const lfo  = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.value = 55;
+
+    lfo.frequency.value = 0.3;
+    lfoGain.gain.value = 10;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 2);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 8);
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 200;
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    lfo.start();
+    osc.start();
+    osc.stop(ctx.currentTime + 8);
+    lfo.stop(ctx.currentTime + 8);
+  } catch(e) {}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第八報告書 — 事案終結記録</title>
+<!-- 
+  ████████████████████████████████████████
+  ██ AUTHORIZED PERSONNEL ONLY          ██
+  ██ FILE: UR-2-L-A-T-E / CLOSED        ██
+  ████████████████████████████████████████
+
+  まだここにいるのか。
+
+  次の扉: 5W2bJzZhcmNoaXZl (Base64)
+  ヒント: この文書の中に8つの数字が隠れている。
+          それらを順番に並べるとコードになる。
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Serif+JP:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --ink: #1a1814;
+    --ink-faint: #4a4640;
+    --ink-ghost: #9a9590;
+    --red: #8b1a1a;
+    --stamp-green: #1a4a1a;
+    --rule: #c8c4bc;
+    --mono: 'Share Tech Mono', monospace;
+    --serif: 'Noto Serif JP', serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-weight: 300;
+    line-height: 1.9;
+    font-size: 14px;
+    /* 微妙な紙テクスチャ */
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 28px,
+        rgba(0,0,0,0.015) 28px,
+        rgba(0,0,0,0.015) 29px
+      );
+    min-height: 100vh;
+    cursor: default;
+  }
+
+  /* スキャン線エフェクト（ごく薄く） */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.008) 2px,
+      rgba(0,0,0,0.008) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .document {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 60px 40px 100px;
+    position: relative;
+  }
+
+  /* ヘッダー — 公式文書ヘッダー */
+  .doc-header {
+    border-top: 3px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: 20px 0 16px;
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .doc-header .agency {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--ink-faint);
+    line-height: 1.6;
+  }
+
+  .doc-header .file-id {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-align: right;
+    color: var(--ink-faint);
+    line-height: 1.6;
+  }
+
+  /* CLOSED スタンプ */
+  .stamp-closed {
+    position: absolute;
+    top: 72px;
+    right: 40px;
+    border: 3px solid var(--stamp-green);
+    color: var(--stamp-green);
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: bold;
+    letter-spacing: 0.2em;
+    padding: 6px 18px;
+    transform: rotate(-8deg);
+    opacity: 0.75;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  /* タイトル */
+  h1.doc-title {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+
+  .doc-subtitle {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.12em;
+    margin-bottom: 36px;
+  }
+
+  hr.rule {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 32px 0;
+  }
+
+  hr.rule-heavy {
+    border: none;
+    border-top: 2px solid var(--ink);
+    margin: 40px 0;
+  }
+
+  /* セクションヘッダー */
+  h2.section {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faint);
+    margin-bottom: 16px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  p {
+    margin-bottom: 16px;
+    text-align: justify;
+  }
+
+  /* 表 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0 28px;
+    font-size: 13px;
+  }
+
+  th {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    font-weight: normal;
+    color: var(--ink-faint);
+    border-bottom: 2px solid var(--ink);
+    padding: 8px 12px;
+    text-align: left;
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .status-resolved {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--stamp-green);
+    font-weight: bold;
+  }
+
+  .status-na {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-ghost);
+  }
+
+  /* 署名欄 */
+  .signature-block {
+    margin-top: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--ink-faint);
+  }
+
+  .sig-line {
+    border-top: 1px solid var(--ink);
+    padding-top: 8px;
+    margin-top: 28px;
+  }
+
+  /* 公式スタンプ（右下） */
+  .stamp-official {
+    margin-top: 40px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-ghost);
+    letter-spacing: 0.1em;
+  }
+
+  /* 関連ファイルリンク */
+  .file-links {
+    margin: 20px 0;
+    padding: 16px 20px;
+    border: 1px solid var(--rule);
+    background: rgba(0,0,0,0.02);
+  }
+
+  .file-links a {
+    display: block;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    text-decoration: none;
+    padding: 4px 0;
+    letter-spacing: 0.05em;
+    transition: color 0.2s;
+  }
+
+  .file-links a:hover { color: var(--ink); }
+  .file-links a.locked { color: var(--ink-ghost); cursor: not-allowed; pointer-events: none; }
+
+  /* 隠しテキスト — 長押しで出現 */
+  .hidden-text {
+    color: #f0ede8; /* 背景に溶け込む */
+    user-select: none;
+    transition: color 0.5s ease, text-shadow 0.5s ease;
+    cursor: crosshair;
+    position: relative;
+  }
+
+  .hidden-text.revealed {
+    color: var(--red);
+    text-shadow: 0 0 8px rgba(139,26,26,0.3);
+  }
+
+  /* 注釈 */
+  .note {
+    font-size: 12px;
+    color: var(--ink-ghost);
+    font-style: italic;
+    margin-top: -8px;
+    margin-bottom: 16px;
+  }
+
+  /* ビューワーカウンター */
+  .viewer-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--ink);
+    color: #888;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 6px 20px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 99;
+  }
+
+  .viewer-bar span.alert { color: #ccc; }
+
+  /* グリッチ演出 */
+  @keyframes glitch {
+    0%, 95%, 100% { transform: none; opacity: 1; }
+    96% { transform: translateX(-2px) skewX(-1deg); opacity: 0.9; }
+    97% { transform: translateX(2px); opacity: 0.95; }
+    98% { transform: translateX(-1px); opacity: 0.85; }
+  }
+
+  .glitch-target {
+    display: inline-block;
+  }
+
+  /* モーダル — 隠しテキストのヒント */
+  .tooltip {
+    display: none;
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: #888;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 8px 20px;
+    letter-spacing: 0.08em;
+    z-index: 200;
+    white-space: nowrap;
+  }
+
+  /* 数字ハイライト（パズル用） */
+  .cipher-num {
+    font-family: var(--mono);
+    font-size: 13px;
+    /* 表面上は普通のテキスト */
+    color: var(--ink);
+  }
+
+  /* フッター */
+  .doc-footer {
+    margin-top: 60px;
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-ghost);
+    display: flex;
+    justify-content: space-between;
+    letter-spacing: 0.08em;
+  }
+
+  /* ページロードアニメーション */
+  .document { animation: fadeIn 1.2s ease forwards; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* 特定文字列のホバー */
+  .redacted {
+    background: var(--ink);
+    color: var(--ink);
+    cursor: help;
+    transition: all 0.3s;
+    padding: 0 2px;
+  }
+  .redacted:hover {
+    background: var(--red);
+    color: transparent;
+  }
+</style>
+</head>
+<body>
+
+<div class="document">
+
+  <!-- 公式ヘッダー -->
+  <div class="doc-header">
+    <div class="agency">
+      ██████機関　内部記録部門<br>
+      UNCLASSIFIED — FINAL REPORT<br>
+      参照番号: DOC-08-FINAL-██████
+    </div>
+    <div class="file-id">
+      作成日: 20██/██/██<br>
+      改訂: 第3版<br>
+      ページ: 1 / 1
+    </div>
+  </div>
+
+  <!-- CLOSED スタンプ -->
+  <div class="stamp-closed">CASE CLOSED</div>
+
+  <!-- タイトル -->
+  <h1 class="doc-title">第八報告書</h1>
+  <div class="doc-subtitle">— 未分類怪異事案 UR-2-L-A-T-E　事案終結記録 / FINAL CLOSURE DOCUMENT —</div>
+
+  <hr class="rule">
+
+  <!-- SECTION 01 -->
+  <h2 class="section">▎ SECTION 01 — 終結概要</h2>
+  <p>
+    本報告書は、第七報告書（参照: DOC-07-██████）において記録された未分類怪異事案
+    「UR-2-L-A-T-E」の<strong>完全終結</strong>を宣言するための最終記録文書である。
+    調査開始より<span class="cipher-num">3</span>年<span class="cipher-num">2</span>ヶ月の調査期間を経て、
+    本事案は20██年██月██日付で正式に終結と判断された。
+  </p>
+  <p>
+    当該事案に関与した計<span class="cipher-num">7</span>名のうち、失踪者<span class="cipher-num">5</span>名の身元確認および
+    所在確認が完了した。関与したウェブ媒体は現在、
+    <strong>無害化処理済みの再現サイト</strong>として管理下に置かれている。
+    閲覧による感染リスクは現時点で検出されていない。
+  </p>
+
+  <hr class="rule">
+
+  <!-- SECTION 02 -->
+  <h2 class="section">▎ SECTION 02 — 事案の収束経緯</h2>
+  <p>
+    20██年██月、担当調査官██による現地調査において、感染の起点となった
+    「同一ドメインを経由したアクセス」の根本原因が特定された。
+    当該ドメインに埋め込まれていた不明コードは、<span class="redacted" title="">██████認証システム</span>の
+    脆弱性を利用したものであり、標的型ではなく無差別型の感染様式を持つことが判明した。
+  </p>
+  <p>
+    コードの無効化処理は3段階に分けて実施された。
+    第1段階（感染経路の遮断）は20██/██/██に完了。
+    第2段階（媒体の中和処理）は<span class="cipher-num">4</span>週間を要した。
+    第3段階（環境の安定化確認）は現在も継続中であるが、
+    異常値は検出されていない。
+  </p>
+
+  <hr class="rule">
+
+  <!-- SECTION 03 — 被害者一覧（更新版）-->
+  <h2 class="section">▎ SECTION 03 — 関与者状況（最終）</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>氏名（ローマ字）</th>
+        <th>最終確認日</th>
+        <th>現在の状態</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="cipher-num">001</td>
+        <td>Asakura Makoto（朝倉 誠）</td>
+        <td>20██/██/██</td>
+        <td class="status-resolved">所在確認済</td>
+      </tr>
+      <tr>
+        <td>002</td>
+        <td>Nisino Moeka（西野 萌佳）</td>
+        <td>20██/██/██</td>
+        <td class="status-resolved">所在確認済</td>
+      </tr>
+      <tr>
+        <td>003</td>
+        <td>Oonuma Takumi（大沼 拓海）</td>
+        <td>20██/██/██</td>
+        <td class="status-resolved">生存・経過観察中</td>
+      </tr>
+      <tr>
+        <td>004</td>
+        <td>Minakuchi Sakura（水口 さくら）</td>
+        <td>20██/██/██</td>
+        <td class="status-resolved">生存・接触不可</td>
+      </tr>
+      <tr>
+        <td>005</td>
+        <td>Araki Hayate（荒木 隼）</td>
+        <td>20██/██/██</td>
+        <td class="status-resolved">所在確認済</td>
+      </tr>
+      <tr>
+        <td>006</td>
+        <td>Lagarta Chihiro（流田 千尋）</td>
+        <td>20██/██/██</td>
+        <td class="status-resolved">所在確認済</td>
+      </tr>
+      <tr>
+        <td>007</td>
+        <td>Yuuki Tooru（結城 透）</td>
+        <td>20██/██/██</td>
+        <td class="status-resolved">所在確認済</td>
+      </tr>
+      <tr>
+        <td class="cipher-num" style="color:var(--ink-ghost)">008</td>
+        <td class="status-na">████████（████）</td>
+        <td class="status-na">——</td>
+        <td class="status-na">記録なし</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="note">※ 全員の詳細な所在は別ファイルにて管理。本文書への記載は省略。</p>
+
+  <hr class="rule">
+
+  <!-- SECTION 04 — 最終証言（大沼） -->
+  <h2 class="section">▎ SECTION 04 — 最終証言（大沼 拓海、第三回聴取）</h2>
+  <p>
+    以下は事案終結後に実施した、大沼 拓海による第三回（最終）聴取の抜粋である。
+    本人は落ち着いた様子で応答し、事案当時の記憶も整理されているとのことであった。
+  </p>
+
+  <blockquote style="border-left: 2px solid var(--rule); padding-left: 20px; margin: 20px 0 24px; color: var(--ink-faint); font-style: italic;">
+    「終わったんだと思います。あれはもう、どこにもいない。<br>
+    ……ただ、たまに夢を見ます。鏡の夢。<br>
+    夢の中で鏡を見ると、自分じゃないものが映っている。<br>
+    でも、それもただの夢だと、今は思えます。」
+  </blockquote>
+
+  <p class="note">
+    ※ 担当医の見解：外傷性記憶の再処理は良好に進行中。予後は良好と判断。<br>
+    <!-- 水口さくらは第三回聴取に応じなかった。理由は記録されていない。 -->
+  </p>
+
+  <!-- 隠しテキスト（長押しで出現） -->
+  <p style="margin-top:8px;">
+    <span class="hidden-text" id="hidden1" data-hint="hold">
+      水口さくらは終結宣言の3日後に再度失踪した。担当官██は報告を握りつぶした。これは記録されていない。
+    </span>
+  </p>
+
+  <hr class="rule">
+
+  <!-- SECTION 05 — 再現サイトについて -->
+  <h2 class="section">▎ SECTION 05 — 再現サイトの取り扱いについて</h2>
+  <p>
+    事案の記録保存および研究目的のため、感染媒体となったウェブサイトは
+    <strong>無害化処理を施した再現サイト</strong>として公開中である。
+    現在閲覧可能な「第七報告書」はこの再現サイトに該当する。
+    感染性コードは完全に除去されており、閲覧に際してのリスクはない。
+  </p>
+  <p>
+    再現サイト閲覧後に体調の異変を感じた場合は、<span class="redacted" title="感じているのなら、もう遅い">██████相談窓口</span>まで連絡されたい。
+    ただし、そのような事例は現在まで<span class="cipher-num">0</span>件である。
+  </p>
+
+  <hr class="rule">
+
+  <!-- SECTION 06 — 関連ファイル -->
+  <h2 class="section">▎ SECTION 06 — 関連ファイル</h2>
+  <div class="file-links">
+    <a href="https://yumemi-daihuku.github.io/seventhreport/" target="_blank">第七報告書（再現サイト）— 閲覧可</a>
+    <a href="archive.html" id="archive-link" class="locked">ARCHIVE_08.enc — アクセスコード必要</a>
+    <a href="#" class="locked">SIGNAL_DATA_02.wav — 処理中</a>
+    <a href="#" class="locked">TERMINAL_08 — 閲覧制限中</a>
+  </div>
+  <p class="note">※ ARCHIVE_08 へのアクセスコードは本文書内に存在する。</p>
+
+  <hr class="rule-heavy">
+
+  <!-- 署名欄 -->
+  <div class="signature-block">
+    <div>
+      <div style="font-size:12px; color:var(--ink-faint); margin-bottom: 4px;">事案担当調査官</div>
+      <div class="sig-line">████ ████</div>
+      <div style="font-size:11px; color:var(--ink-ghost); margin-top:4px;">20██/██/██　署名</div>
+    </div>
+    <div>
+      <div style="font-size:12px; color:var(--ink-faint); margin-bottom: 4px;">承認者</div>
+      <div class="sig-line">██████機関　記録部門長</div>
+      <div style="font-size:11px; color:var(--ink-ghost); margin-top:4px;">20██/██/██　承認</div>
+    </div>
+  </div>
+
+  <!-- 公式スタンプ -->
+  <div class="stamp-official">
+    本文書の複製・転載・転送は禁止。　閲覧後は適切に廃棄すること。<br>
+    ██████機関　内部記録部門　所有
+  </div>
+
+  <!-- フッター -->
+  <div class="doc-footer">
+    <span>DOC-08-FINAL / REV.3</span>
+    <span>UNCLASSIFIED — FOR INTERNAL USE ONLY</span>
+    <span>PAGE 1 / 1</span>
+  </div>
+
+</div>
+
+<!-- ビューワーバー -->
+<div class="viewer-bar">
+  <span>FILE: UR-2-L-A-T-E / CLOSED</span>
+  <span class="alert" id="viewer-count">VIEWER: 1</span>
+</div>
+
+<!-- 隠しヒントトースト -->
+<div class="tooltip" id="tooltip">長押しで何かが見えるかもしれない</div>
+
+<script>
+// ─────────────────────────────────────
+// SE: 低周波ノイズ（ページロード時）
+// Web Audio API でホワイトノイズをフィルタリングして不穏な低音を生成
+// ─────────────────────────────────────
+(function initAudio() {
+  let audioStarted = false;
+
+  function startAmbient() {
+    if (audioStarted) return;
+    audioStarted = true;
+
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // バッファノイズ生成
+      const bufferSize = ctx.sampleRate * 3;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * 0.4;
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+
+      // 低域通過フィルター（不穏な低音のみ残す）
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 80;
+      filter.Q.value = 0.8;
+
+      // ゲイン（かなり小さく）
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 3);
+      // 10秒後にフェードアウト
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 10);
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      source.start();
+    } catch(e) {
+      // AudioContext非対応環境では無視
+    }
+  }
+
+  // 最初のユーザー操作で開始（ブラウザのAutoplay Policy対応）
+  document.addEventListener('click', startAmbient, { once: true });
+  document.addEventListener('scroll', startAmbient, { once: true });
+})();
+
+// ─────────────────────────────────────
+// 隠しテキスト: 長押し（500ms）で出現
+// ─────────────────────────────────────
+(function initHiddenText() {
+  const hiddenEls = document.querySelectorAll('.hidden-text');
+  const tooltip = document.getElementById('tooltip');
+  let tooltipShown = false;
+
+  hiddenEls.forEach(el => {
+    let pressTimer = null;
+
+    function startPress() {
+      pressTimer = setTimeout(() => {
+        el.classList.add('revealed');
+        // 出現SE
+        playRevealSound();
+      }, 500);
+
+      if (!tooltipShown) {
+        tooltipShown = true;
+        tooltip.style.display = 'block';
+        setTimeout(() => { tooltip.style.display = 'none'; }, 3000);
+      }
+    }
+
+    function endPress() {
+      clearTimeout(pressTimer);
+    }
+
+    el.addEventListener('mousedown', startPress);
+    el.addEventListener('touchstart', startPress, { passive: true });
+    el.addEventListener('mouseup', endPress);
+    el.addEventListener('mouseleave', endPress);
+    el.addEventListener('touchend', endPress);
+  });
+})();
+
+// 隠しテキスト出現時のSE
+function playRevealSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.6);
+
+    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.6);
+  } catch(e) {}
+}
+
+// ─────────────────────────────────────
+// ビューワーカウンター: じわじわ増える
+// ─────────────────────────────────────
+(function initViewer() {
+  const el = document.getElementById('viewer-count');
+  let count = 1;
+
+  // 不規則なインターバルで増加
+  function tick() {
+    const delay = 8000 + Math.random() * 20000;
+    setTimeout(() => {
+      count++;
+      el.textContent = `VIEWER: ${count}`;
+      // グリッチエフェクト
+      el.style.color = '#ff4444';
+      setTimeout(() => { el.style.color = '#ccc'; }, 200);
+      tick();
+    }, delay);
+  }
+  tick();
+})();
+
+// ─────────────────────────────────────
+// アーカイブリンク: パスワード確認
+// 正解コード: 32754 (本文中の数字: 3,2,7,5,4,0 のうち 32754)
+// ─────────────────────────────────────
+(function initArchiveLink() {
+  const link = document.getElementById('archive-link');
+
+  link.classList.remove('locked');
+  link.style.pointerEvents = 'auto';
+  link.style.cursor = 'pointer';
+
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+
+    const code = prompt(
+      '▶ ARCHIVE_08.enc\nアクセスコードを入力してください:',
+      ''
+    );
+
+    if (code === null) return;
+
+    // 正解: 本文中の数字 3・2・7・5・4 を順番に並べたもの
+    if (code.trim() === '32754') {
+      window.location.href = 'archive.html';
+    } else {
+      // エラーSE
+      playDenySound();
+      alert('ACCESS DENIED\nコードが正しくありません。');
+    }
+  });
+})();
+
+function playDenySound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 80;
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
+}
+
+// ─────────────────────────────────────
+// グリッチ: タイトルが時々ぶれる
+// ─────────────────────────────────────
+(function initGlitch() {
+  const title = document.querySelector('h1.doc-title');
+  if (!title) return;
+
+  setInterval(() => {
+    if (Math.random() < 0.15) {
+      title.style.animation = 'glitch 0.3s ease';
+      setTimeout(() => { title.style.animation = ''; }, 300);
+    }
+  }, 5000);
+})();
+</script>
+</body>
+</html>

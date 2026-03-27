@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARCHIVE_08 — 機密解除ファイル</title>
+<!--
+  まだ読んでいるのか。
+
+  この音声を逆再生してみろ。
+  答えが聞こえる。
+-->
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Serif+JP:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #090b0a;
+    --fg: #a8c4a2;
+    --fg-dim: #4a6648;
+    --fg-bright: #d4f0cc;
+    --red: #c44040;
+    --mono: 'Share Tech Mono', monospace;
+    --serif: 'Noto Serif JP', serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+    /* CRTスキャンライン */
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,255,0,0.015) 3px,
+        rgba(0,255,0,0.015) 4px
+      );
+    cursor: text;
+  }
+
+  /* ビネット */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 50;
+  }
+
+  .terminal {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* タイプライターエフェクト用 */
+  .line {
+    white-space: pre-wrap;
+    word-break: break-all;
+    min-height: 1.8em;
+    opacity: 0;
+  }
+
+  .line.visible { opacity: 1; }
+
+  .line.header { color: var(--fg-bright); letter-spacing: 0.1em; }
+  .line.dim     { color: var(--fg-dim); }
+  .line.error   { color: var(--red); }
+  .line.warn    { color: #c4a040; }
+
+  hr.t-rule {
+    border: none;
+    border-top: 1px solid var(--fg-dim);
+    margin: 20px 0;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  hr.t-rule.visible { opacity: 1; }
+
+  /* 点滅カーソル */
+  .cursor::after {
+    content: '█';
+    animation: blink 1s step-end infinite;
+    color: var(--fg);
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* 音声プレイヤー */
+  .audio-section {
+    margin: 32px 0;
+    padding: 20px;
+    border: 1px solid var(--fg-dim);
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .audio-section.visible { opacity: 1; }
+
+  .audio-label {
+    color: var(--fg-dim);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+
+  .audio-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  button.t-btn {
+    background: transparent;
+    border: 1px solid var(--fg-dim);
+    color: var(--fg);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 16px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+  }
+  button.t-btn:hover {
+    background: var(--fg-dim);
+    color: var(--bg);
+  }
+  button.t-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  button.t-btn.active {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  #audio-status {
+    color: var(--fg-dim);
+    font-size: 11px;
+  }
+
+  /* 周波数ビジュアライザー */
+  #visualizer {
+    width: 100%;
+    height: 48px;
+    margin-top: 12px;
+    background: rgba(0,0,0,0.4);
+    display: block;
+  }
+
+  /* 逆再生後の隠しメッセージ */
+  #reveal-section {
+    display: none;
+    margin-top: 32px;
+    padding: 20px;
+    border: 1px solid var(--red);
+    animation: flicker 0.1s ease infinite alternate;
+  }
+
+  @keyframes flicker {
+    from { opacity: 0.95; }
+    to   { opacity: 1; }
+  }
+
+  #reveal-section.visible { display: block; }
+
+  .reveal-text {
+    color: var(--fg-bright);
+    line-height: 2;
+  }
+
+  .next-hint {
+    margin-top: 16px;
+    color: var(--fg-dim);
+    font-size: 12px;
+    border-top: 1px solid var(--fg-dim);
+    padding-top: 12px;
+  }
+
+  .next-hint a {
+    color: var(--fg);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* 記録テーブル */
+  .record-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .record-table.visible { opacity: 1; }
+
+  .record-table td {
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(100,150,100,0.2);
+    vertical-align: top;
+  }
+
+  .record-table td:first-child {
+    color: var(--fg-dim);
+    width: 180px;
+    white-space: nowrap;
+  }
+
+  /* スクロール */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--fg-dim); }
+</style>
+</head>
+<body>
+
+<div class="terminal">
+
+  <div class="line header" id="l0">SECURE_TERMINAL v2.1 — ██████ NODE</div>
+  <div class="line dim"   id="l1">ARCHIVE_08.enc // 機密解除ファイル</div>
+  <hr class="t-rule" id="r1">
+
+  <div class="line" id="l2">&gt; ACCESS GRANTED — CODE VERIFIED</div>
+  <div class="line dim" id="l3">タイムスタンプ: 20██-██-██ ██:██:██ UTC</div>
+  <div class="line dim" id="l4">閲覧者セッションID: ████████████</div>
+  <hr class="t-rule" id="r2">
+
+  <div class="line warn" id="l5">&gt; 警告: このファイルは機密解除されているが、</div>
+  <div class="line warn" id="l6">       内容の一部は担当部門の判断により伏字処理されている。</div>
+  <hr class="t-rule" id="r3">
+
+  <!-- 隠し記録 -->
+  <div class="line header" id="l7">■ 未公開記録: 水口さくらの第二回聴取（拒否後）</div>
+  <br>
+
+  <div class="line" id="l8">第七報告書において、水口さくら（004）は証言を「拒否」したとある。</div>
+  <div class="line" id="l9">これは正確ではない。</div>
+  <br>
+  <div class="line" id="l10">水口は証言した。</div>
+  <div class="line" id="l11">ただし、その内容が「記録に値しない」と担当官████によって判断され、</div>
+  <div class="line" id="l12">公式記録への掲載が差し止められた。</div>
+  <br>
+
+  <table class="record-table" id="tbl1">
+    <tr><td>聴取日時</td><td>20██/██/██ 14:22〜14:47</td></tr>
+    <tr><td>場所</td><td>████研究施設 第3聴取室</td></tr>
+    <tr><td>担当</td><td>████（第七報告書では失踪扱い）</td></tr>
+    <tr><td>記録者</td><td>本ファイルの作成者</td></tr>
+    <tr><td>水口の状態</td><td>外見上は平静。ただし「鏡を見ない」という条件を提示</td></tr>
+  </table>
+
+  <br>
+  <div class="line" id="l13">水口の発言（抜粋）:</div>
+  <br>
+  <div class="line warn" id="l14">&gt; 「あれは消えていない。移っただけ。」</div>
+  <div class="line warn" id="l15">&gt; 「あなたたちが"制圧"と呼んでいるものは、</div>
+  <div class="line warn" id="l16">     あれが望んだことそのものだ。」</div>
+  <div class="line warn" id="l17">&gt; 「再現サイト？　笑える。」</div>
+  <br>
+
+  <div class="line dim" id="l18">────────────────────────────────</div>
+  <div class="line error" id="l19">&gt; この発言の後、水口は聴取室の鏡を布で覆うよう要求した。</div>
+  <div class="line error" id="l20">&gt; 要求は却下された。</div>
+  <div class="line error" id="l21">&gt; 水口はその後、一言も発しなかった。</div>
+  <div class="line dim" id="l22">────────────────────────────────</div>
+
+  <hr class="t-rule" id="r4">
+
+  <!-- 音声ファイル -->
+  <div class="line header" id="l23">■ SIGNAL_DATA_02.wav — 添付音声ファイル</div>
+  <br>
+  <div class="line dim" id="l24">※ このファイルは処理中と表示されているが、実際には存在する。</div>
+  <div class="line dim" id="l25">   正順再生では何も聞こえない。</div>
+  <br>
+
+  <div class="audio-section" id="audio-section">
+    <div class="audio-label">SIGNAL_DATA_02.wav // 生成音声（合成）</div>
+    <div class="audio-controls">
+      <button class="t-btn" id="btn-play">▶ 再生</button>
+      <button class="t-btn" id="btn-reverse">⟳ 逆再生</button>
+      <button class="t-btn" id="btn-stop" disabled>■ 停止</button>
+      <span id="audio-status">待機中</span>
+    </div>
+    <canvas id="visualizer"></canvas>
+  </div>
+
+  <!-- 逆再生後に出現 -->
+  <div id="reveal-section">
+    <div class="reveal-text" id="reveal-text"></div>
+    <div class="next-hint" id="next-hint" style="display:none">
+      最後の扉: <a href="signal.html">signal.html</a><br>
+      <span class="dim" style="font-size:11px; color: var(--fg-dim)">— そこに全てがある</span>
+    </div>
+  </div>
+
+  <hr class="t-rule" id="r5">
+  <div class="line dim cursor" id="l-cursor" style="margin-top:8px;"> </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────
+// タイプライター表示エフェクト
+// 各要素を順番に遅延表示する
+// ─────────────────────────────────────
+(function initTypewriter() {
+  const sequence = [
+    { id: 'l0',   delay: 100 },
+    { id: 'l1',   delay: 300 },
+    { id: 'r1',   delay: 500 },
+    { id: 'l2',   delay: 700 },
+    { id: 'l3',   delay: 900 },
+    { id: 'l4',   delay: 1100 },
+    { id: 'r2',   delay: 1300 },
+    { id: 'l5',   delay: 1500 },
+    { id: 'l6',   delay: 1700 },
+    { id: 'r3',   delay: 1900 },
+    { id: 'l7',   delay: 2200 },
+    { id: 'l8',   delay: 2600 },
+    { id: 'l9',   delay: 2900 },
+    { id: 'l10',  delay: 3300 },
+    { id: 'l11',  delay: 3600 },
+    { id: 'l12',  delay: 3900 },
+    { id: 'tbl1', delay: 4300 },
+    { id: 'l13',  delay: 4800 },
+    { id: 'l14',  delay: 5100 },
+    { id: 'l15',  delay: 5400 },
+    { id: 'l16',  delay: 5700 },
+    { id: 'l17',  delay: 6000 },
+    { id: 'l18',  delay: 6300 },
+    { id: 'l19',  delay: 6600 },
+    { id: 'l20',  delay: 6900 },
+    { id: 'l21',  delay: 7200 },
+    { id: 'l22',  delay: 7500 },
+    { id: 'r4',   delay: 7800 },
+    { id: 'l23',  delay: 8100 },
+    { id: 'l24',  delay: 8400 },
+    { id: 'l25',  delay: 8700 },
+    { id: 'audio-section', delay: 9200 },
+    { id: 'r5',   delay: 9500 },
+    { id: 'l-cursor', delay: 9700 },
+  ];
+
+  sequence.forEach(({ id, delay }) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('visible');
+    }, delay);
+  });
+})();
+
+// ─────────────────────────────────────
+// Web Audio API: 音声ファイルの生成・逆再生
+// ─────────────────────────────────────
+(function initAudio() {
+  const btnPlay    = document.getElementById('btn-play');
+  const btnReverse = document.getElementById('btn-reverse');
+  const btnStop    = document.getElementById('btn-stop');
+  const status     = document.getElementById('audio-status');
+  const canvas     = document.getElementById('visualizer');
+  const ctx2d      = canvas.getContext('2d');
+
+  let audioCtx = null;
+  let currentSource = null;
+  let analyser = null;
+  let animId = null;
+  let reversePlayed = false;
+
+  // AudioContextの初期化（遅延初期化）
+  function getAudioCtx() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.connect(audioCtx.destination);
+    }
+    return audioCtx;
+  }
+
+  // 音声バッファ生成
+  // 正順: ホワイトノイズ + 低周波ドローン → 何も聞こえないように感じる
+  // 逆再生: 同じバッファを逆にすると「signal.html」が聞こえる（モールス的トーン）
+  function generateBuffer(ctx) {
+    const duration = 6; // 秒
+    const sr = ctx.sampleRate;
+    const buffer = ctx.createBuffer(1, sr * duration, sr);
+    const data = buffer.getChannelData(0);
+
+    // ノイズベース
+    for (let i = 0; i < data.length; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.05;
+    }
+
+    // モールス符号風のトーン（逆再生時に聞こえる）
+    // "signal" を逆順に埋め込む → 逆再生すると正順になる
+    // 逆再生で聞こえるメッセージ: 「そこにある / signal.html」
+    const toneFreq = 880;
+    const encodedTones = buildReverseTones(sr, duration, toneFreq);
+    for (let i = 0; i < data.length; i++) {
+      data[i] += encodedTones[i] || 0;
+    }
+
+    return buffer;
+  }
+
+  // 逆再生時に「s-i-g-n-a-l」が聞こえるようにトーンを逆順で配置
+  function buildReverseTones(sr, duration, freq) {
+    const out = new Float32Array(sr * duration);
+    const totalSamples = out.length;
+
+    // "signal.html" の各文字をビープとして逆順に配置（逆再生で正順になる）
+    const message = 'SIGNAL';
+    const dotLen = Math.floor(sr * 0.08);
+    const gapLen = Math.floor(sr * 0.06);
+
+    let pos = totalSamples - 1;
+
+    // 逆順に埋め込む（逆再生で正順に聴こえる）
+    for (let ci = message.length - 1; ci >= 0; ci--) {
+      const charCode = message.charCodeAt(ci);
+      // 文字コードの下位3bitで短点/長点を決定（簡易エンコード）
+      const bits = charCode & 0b111;
+      for (let b = 0; b < 3; b++) {
+        const len = (bits >> b & 1) ? dotLen * 3 : dotLen;
+        pos -= gapLen;
+        for (let s = 0; s < len && pos - s >= 0; s++) {
+          const t = s / sr;
+          out[pos - s] = Math.sin(2 * Math.PI * freq * t) * 0.15;
+        }
+        pos -= len;
+      }
+      pos -= gapLen * 2;
+    }
+
+    return out;
+  }
+
+  // 停止
+  function stopAll() {
+    if (currentSource) {
+      try { currentSource.stop(); } catch(e) {}
+      currentSource = null;
+    }
+    cancelAnimationFrame(animId);
+    // キャンバスをクリア
+    ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+    btnStop.disabled = true;
+    btnPlay.disabled = false;
+    btnReverse.disabled = false;
+  }
+
+  // 再生（共通）
+  function playBuffer(buffer, reversed) {
+    stopAll();
+    const ctx = getAudioCtx();
+
+    const data = buffer.getChannelData(0);
+    const playData = reversed ? Float32Array.from(data).reverse() : data;
+
+    // 新しいバッファに書き込む（元を変更しない）
+    const playBuffer = ctx.createBuffer(1, playData.length, ctx.sampleRate);
+    playBuffer.getChannelData(0).set(playData);
+
+    const source = ctx.createBufferSource();
+    source.buffer = playBuffer;
+    source.connect(analyser);
+    source.start();
+    currentSource = source;
+
+    btnStop.disabled = false;
+    btnPlay.disabled = true;
+    btnReverse.disabled = true;
+    status.textContent = reversed ? '逆再生中...' : '再生中...';
+
+    source.onended = () => {
+      stopAll();
+      status.textContent = '再生完了';
+      if (reversed) handleReverseEnd();
+    };
+
+    drawVisualizer(reversed);
+  }
+
+  // 逆再生終了後の処理
+  function handleReverseEnd() {
+    if (reversePlayed) return;
+    reversePlayed = true;
+
+    // 少し待ってからメッセージ表示
+    setTimeout(() => {
+      const revealSection = document.getElementById('reveal-section');
+      const revealText = document.getElementById('reveal-text');
+      const nextHint = document.getElementById('next-hint');
+
+      revealText.innerHTML = [
+        '&gt; 逆再生解析完了',
+        '&gt; 音声内容: ████の声',
+        '&gt; 内容書き起こし:',
+        '',
+        '   「移った先は、このファイルじゃない。」',
+        '   「次の扉を探せ。」',
+        '   「signal.html にある。」',
+        '',
+        '&gt; 解析終了'
+      ].join('\n');
+
+      revealSection.classList.add('visible');
+
+      // さらに少し待ってリンク表示
+      setTimeout(() => {
+        nextHint.style.display = 'block';
+      }, 2000);
+
+      // 出現SE
+      playRevealChime();
+    }, 800);
+  }
+
+  // ビジュアライザー描画
+  function drawVisualizer(reversed) {
+    const bufLen = analyser.frequencyBinCount;
+    const freqData = new Uint8Array(bufLen);
+
+    canvas.width  = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    function draw() {
+      animId = requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(freqData);
+
+      ctx2d.fillStyle = 'rgba(9, 11, 10, 0.3)';
+      ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+
+      const barW = (canvas.width / bufLen) * 2.5;
+      let x = 0;
+
+      for (let i = 0; i < bufLen; i++) {
+        const barH = (freqData[i] / 255) * canvas.height;
+        const green = reversed ? 200 : 120;
+        ctx2d.fillStyle = `rgb(40, ${green}, 40)`;
+        ctx2d.fillRect(x, canvas.height - barH, barW, barH);
+        x += barW + 1;
+      }
+    }
+    draw();
+  }
+
+  // 出現チャイム
+  function playRevealChime() {
+    try {
+      const ctx = getAudioCtx();
+      [440, 554, 659].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.15);
+        gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + i * 0.15 + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.4);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.15);
+        osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+      });
+    } catch(e) {}
+  }
+
+  // バッファはキャッシュして使い回す
+  let cachedBuffer = null;
+
+  btnPlay.addEventListener('click', () => {
+    const ctx = getAudioCtx();
+    if (!cachedBuffer) cachedBuffer = generateBuffer(ctx);
+    playBuffer(cachedBuffer, false);
+  });
+
+  btnReverse.addEventListener('click', () => {
+    const ctx = getAudioCtx();
+    if (!cachedBuffer) cachedBuffer = generateBuffer(ctx);
+    playBuffer(cachedBuffer, true);
+  });
+
+  btnStop.addEventListener('click', () => {
+    stopAll();
+    status.textContent = '停止';
+  });
+})();
+</script>
+</body>
+</html>
