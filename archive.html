@@ -275,21 +275,20 @@
   <div class="line header" id="l23">■ SIGNAL_DATA_02.wav — 添付音声ファイル</div>
   <br>
   <div class="line dim" id="l24">※ このファイルは処理中と表示されているが、実際には存在する。</div>
-  <div class="line dim" id="l25">   正順再生では何も聞こえない。</div>
+  <div class="line dim" id="l25">   音声を注意深く聴くこと。信号が含まれている。</div>
   <br>
 
   <div class="audio-section" id="audio-section">
     <div class="audio-label">SIGNAL_DATA_02.wav // 生成音声（合成）</div>
     <div class="audio-controls">
       <button class="t-btn" id="btn-play">▶ 再生</button>
-      <button class="t-btn" id="btn-reverse">⟳ 逆再生</button>
       <button class="t-btn" id="btn-stop" disabled>■ 停止</button>
       <span id="audio-status">待機中</span>
     </div>
     <canvas id="visualizer"></canvas>
   </div>
 
-  <!-- 逆再生後に出現 -->
+  <!-- 再生完了後に出現 -->
   <div id="reveal-section">
     <div class="reveal-text" id="reveal-text"></div>
     <div class="next-hint" id="next-hint" style="display:none">
@@ -355,23 +354,33 @@
 })();
 
 // ─────────────────────────────────────
-// Web Audio API: 音声ファイルの生成・逆再生
+// Web Audio API: モールス信号「MIRROR」を生成・再生
+//
+// 国際モールス符号で MIRROR を正確にエンコード:
+//   M = --
+//   I = ..
+//   R = .-.
+//   R = .-.
+//   O = ---
+//   R = .-.
+//
+// dot = 0.08s, dash = 0.24s, 符号間隔 = 0.08s, 文字間隔 = 0.24s
+// 前後に低周波ノイズドローンを重ねて「ただの雑音の中に信号がある」演出にする
 // ─────────────────────────────────────
 (function initAudio() {
-  const btnPlay    = document.getElementById('btn-play');
-  const btnReverse = document.getElementById('btn-reverse');
-  const btnStop    = document.getElementById('btn-stop');
-  const status     = document.getElementById('audio-status');
-  const canvas     = document.getElementById('visualizer');
-  const ctx2d      = canvas.getContext('2d');
+  const btnPlay  = document.getElementById('btn-play');
+  const btnStop  = document.getElementById('btn-stop');
+  const status   = document.getElementById('audio-status');
+  const canvas   = document.getElementById('visualizer');
+  const ctx2d    = canvas.getContext('2d');
 
-  let audioCtx = null;
+  let audioCtx     = null;
   let currentSource = null;
-  let analyser = null;
-  let animId = null;
-  let reversePlayed = false;
+  let analyser      = null;
+  let animId        = null;
+  let playedOnce    = false; // 再生完了後の一度だけ reveal を発火
 
-  // AudioContextの初期化（遅延初期化）
+  // AudioContext 遅延初期化（Autoplay Policy 対応）
   function getAudioCtx() {
     if (!audioCtx) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -382,209 +391,199 @@
     return audioCtx;
   }
 
-  // 音声バッファ生成
-  // 正順: ホワイトノイズ + 低周波ドローン → 何も聞こえないように感じる
-  // 逆再生: 同じバッファを逆にすると「signal.html」が聞こえる（モールス的トーン）
-  function generateBuffer(ctx) {
-    const duration = 6; // 秒
-    const sr = ctx.sampleRate;
-    const buffer = ctx.createBuffer(1, sr * duration, sr);
-    const data = buffer.getChannelData(0);
+  // ─── モールス符号テーブル（国際標準） ───
+  const MORSE = {
+    M: '--',   I: '..',   R: '.-.',
+    O: '---',  A: '.-',   B: '-...',
+    C: '-.-.',  D: '-..',  E: '.',
+    F: '..-.',  G: '--.',  H: '....',
+    J: '.---',  K: '-.-',  L: '.-..',
+    N: '-.',    P: '.--.',  Q: '--.-',
+    S: '...',  T: '-',    U: '..-',
+    V: '...-',  W: '.--',  X: '-..-',
+    Y: '-.--',  Z: '--..',
+  };
 
-    // ノイズベース
+  const DOT   = 0.08;  // 秒
+  const DASH  = DOT * 3;
+  const UNIT  = DOT;   // 符号内の間隔
+  const CGAP  = DOT * 3; // 文字間の間隔
+  const TONE  = 750;   // Hz（よく聞こえる周波数帯）
+  const VOL   = 0.25;  // モールス音量
+
+  // バッファに正弦波を書き込むヘルパー
+  function writeTone(data, sr, startSec, durSec, freq, vol) {
+    const start = Math.floor(startSec * sr);
+    const end   = Math.min(Math.floor((startSec + durSec) * sr), data.length);
+    for (let i = start; i < end; i++) {
+      const t = (i - start) / sr;
+      // 両端を短くフェードして「クリック音」を防ぐ
+      const fade = Math.min(t / 0.005, 1, (durSec - t) / 0.005);
+      data[i] += Math.sin(2 * Math.PI * freq * t) * vol * fade;
+    }
+  }
+
+  // MIRROR のモールス信号バッファを生成
+  function generateMorseBuffer(ctx) {
+    const message = 'MIRROR';
+
+    // まず全長を計算してバッファサイズを決める
+    let totalDur = 0.5; // 先頭の余白
+    for (let ci = 0; ci < message.length; ci++) {
+      const code = MORSE[message[ci]] || '';
+      for (let si = 0; si < code.length; si++) {
+        totalDur += (code[si] === '-' ? DASH : DOT);
+        if (si < code.length - 1) totalDur += UNIT;
+      }
+      if (ci < message.length - 1) totalDur += CGAP;
+    }
+    totalDur += 0.8; // 末尾の余白
+
+    const sr     = ctx.sampleRate;
+    const buffer = ctx.createBuffer(1, Math.ceil(totalDur * sr), sr);
+    const data   = buffer.getChannelData(0);
+
+    // 背景ノイズ（薄いホワイトノイズ）
     for (let i = 0; i < data.length; i++) {
-      data[i] = (Math.random() * 2 - 1) * 0.05;
+      data[i] = (Math.random() * 2 - 1) * 0.018;
     }
 
-    // モールス符号風のトーン（逆再生時に聞こえる）
-    // "signal" を逆順に埋め込む → 逆再生すると正順になる
-    // 逆再生で聞こえるメッセージ: 「そこにある / signal.html」
-    const toneFreq = 880;
-    const encodedTones = buildReverseTones(sr, duration, toneFreq);
-    for (let i = 0; i < data.length; i++) {
-      data[i] += encodedTones[i] || 0;
+    // モールス符号を書き込む
+    let t = 0.5;
+    for (let ci = 0; ci < message.length; ci++) {
+      const code = MORSE[message[ci]] || '';
+      for (let si = 0; si < code.length; si++) {
+        const dur = code[si] === '-' ? DASH : DOT;
+        writeTone(data, sr, t, dur, TONE, VOL);
+        t += dur;
+        if (si < code.length - 1) t += UNIT;
+      }
+      if (ci < message.length - 1) t += CGAP;
     }
 
     return buffer;
   }
 
-  // 逆再生時に「s-i-g-n-a-l」が聞こえるようにトーンを逆順で配置
-  function buildReverseTones(sr, duration, freq) {
-    const out = new Float32Array(sr * duration);
-    const totalSamples = out.length;
-
-    // "signal.html" の各文字をビープとして逆順に配置（逆再生で正順になる）
-    const message = 'SIGNAL';
-    const dotLen = Math.floor(sr * 0.08);
-    const gapLen = Math.floor(sr * 0.06);
-
-    let pos = totalSamples - 1;
-
-    // 逆順に埋め込む（逆再生で正順に聴こえる）
-    for (let ci = message.length - 1; ci >= 0; ci--) {
-      const charCode = message.charCodeAt(ci);
-      // 文字コードの下位3bitで短点/長点を決定（簡易エンコード）
-      const bits = charCode & 0b111;
-      for (let b = 0; b < 3; b++) {
-        const len = (bits >> b & 1) ? dotLen * 3 : dotLen;
-        pos -= gapLen;
-        for (let s = 0; s < len && pos - s >= 0; s++) {
-          const t = s / sr;
-          out[pos - s] = Math.sin(2 * Math.PI * freq * t) * 0.15;
-        }
-        pos -= len;
-      }
-      pos -= gapLen * 2;
-    }
-
-    return out;
-  }
-
-  // 停止
+  // 停止処理
   function stopAll() {
     if (currentSource) {
       try { currentSource.stop(); } catch(e) {}
       currentSource = null;
     }
     cancelAnimationFrame(animId);
-    // キャンバスをクリア
     ctx2d.clearRect(0, 0, canvas.width, canvas.height);
     btnStop.disabled = true;
     btnPlay.disabled = false;
-    btnReverse.disabled = false;
   }
 
-  // 再生（共通）
-  function playBuffer(buffer, reversed) {
+  // 再生
+  function playMorse() {
     stopAll();
     const ctx = getAudioCtx();
-
-    const data = buffer.getChannelData(0);
-    const playData = reversed ? Float32Array.from(data).reverse() : data;
-
-    // 新しいバッファに書き込む（元を変更しない）
-    const playBuffer = ctx.createBuffer(1, playData.length, ctx.sampleRate);
-    playBuffer.getChannelData(0).set(playData);
+    const buffer = generateMorseBuffer(ctx);
 
     const source = ctx.createBufferSource();
-    source.buffer = playBuffer;
+    source.buffer = buffer;
     source.connect(analyser);
     source.start();
     currentSource = source;
 
     btnStop.disabled = false;
     btnPlay.disabled = true;
-    btnReverse.disabled = true;
-    status.textContent = reversed ? '逆再生中...' : '再生中...';
+    status.textContent = '再生中...';
 
     source.onended = () => {
       stopAll();
       status.textContent = '再生完了';
-      if (reversed) handleReverseEnd();
+      if (!playedOnce) {
+        playedOnce = true;
+        handlePlayEnd();
+      }
     };
 
-    drawVisualizer(reversed);
+    drawVisualizer();
   }
 
-  // 逆再生終了後の処理
-  function handleReverseEnd() {
-    if (reversePlayed) return;
-    reversePlayed = true;
-
-    // 少し待ってからメッセージ表示
+  // 再生終了後: 解読ヒントと次の扉を表示
+  function handlePlayEnd() {
     setTimeout(() => {
       const revealSection = document.getElementById('reveal-section');
-      const revealText = document.getElementById('reveal-text');
-      const nextHint = document.getElementById('next-hint');
+      const revealText    = document.getElementById('reveal-text');
+      const nextHint      = document.getElementById('next-hint');
 
       revealText.innerHTML = [
-        '&gt; 逆再生解析完了',
-        '&gt; 音声内容: ████の声',
-        '&gt; 内容書き起こし:',
+        '&gt; 音声解析完了',
+        '&gt; 信号種別: モールス符号（国際標準）',
+        '&gt; 書き起こし:',
         '',
-        '   「移った先は、このファイルじゃない。」',
-        '   「次の扉を探せ。」',
-        '   「signal.html にある。」',
+        '   -- .. .-. .-. --- .-.',
         '',
-        '&gt; 解析終了'
+        '&gt; 解読結果: ████████',
+        '&gt; 次の扉への鍵が含まれている。',
       ].join('\n');
 
       revealSection.classList.add('visible');
 
-      // さらに少し待ってリンク表示
       setTimeout(() => {
         nextHint.style.display = 'block';
-      }, 2000);
-
-      // 出現SE
-      playRevealChime();
-    }, 800);
+        playRevealChime();
+      }, 1800);
+    }, 600);
   }
 
-  // ビジュアライザー描画
-  function drawVisualizer(reversed) {
-    const bufLen = analyser.frequencyBinCount;
-    const freqData = new Uint8Array(bufLen);
-
+  // ビジュアライザー描画（波形表示）
+  function drawVisualizer() {
     canvas.width  = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
+    const bufLen  = analyser.frequencyBinCount;
+    const timeData = new Uint8Array(bufLen);
 
     function draw() {
       animId = requestAnimationFrame(draw);
-      analyser.getByteFrequencyData(freqData);
+      analyser.getByteTimeDomainData(timeData);
 
-      ctx2d.fillStyle = 'rgba(9, 11, 10, 0.3)';
+      ctx2d.fillStyle = 'rgba(9, 11, 10, 0.4)';
       ctx2d.fillRect(0, 0, canvas.width, canvas.height);
 
-      const barW = (canvas.width / bufLen) * 2.5;
-      let x = 0;
+      ctx2d.beginPath();
+      ctx2d.strokeStyle = 'rgb(40, 180, 60)';
+      ctx2d.lineWidth = 1.5;
 
+      const sliceW = canvas.width / bufLen;
+      let x = 0;
       for (let i = 0; i < bufLen; i++) {
-        const barH = (freqData[i] / 255) * canvas.height;
-        const green = reversed ? 200 : 120;
-        ctx2d.fillStyle = `rgb(40, ${green}, 40)`;
-        ctx2d.fillRect(x, canvas.height - barH, barW, barH);
-        x += barW + 1;
+        const v = timeData[i] / 128;
+        const y = (v * canvas.height) / 2;
+        i === 0 ? ctx2d.moveTo(x, y) : ctx2d.lineTo(x, y);
+        x += sliceW;
       }
+      ctx2d.stroke();
     }
     draw();
   }
 
-  // 出現チャイム
+  // 解読完了チャイム
   function playRevealChime() {
     try {
       const ctx = getAudioCtx();
       [440, 554, 659].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
+        const osc  = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.frequency.value = freq;
         osc.type = 'sine';
-        gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.15);
-        gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + i * 0.15 + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.4);
+        osc.frequency.value = freq;
+        const t0 = ctx.currentTime + i * 0.18;
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(0.06, t0 + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.5);
         osc.connect(gain);
         gain.connect(ctx.destination);
-        osc.start(ctx.currentTime + i * 0.15);
-        osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+        osc.start(t0);
+        osc.stop(t0 + 0.5);
       });
     } catch(e) {}
   }
 
-  // バッファはキャッシュして使い回す
-  let cachedBuffer = null;
-
-  btnPlay.addEventListener('click', () => {
-    const ctx = getAudioCtx();
-    if (!cachedBuffer) cachedBuffer = generateBuffer(ctx);
-    playBuffer(cachedBuffer, false);
-  });
-
-  btnReverse.addEventListener('click', () => {
-    const ctx = getAudioCtx();
-    if (!cachedBuffer) cachedBuffer = generateBuffer(ctx);
-    playBuffer(cachedBuffer, true);
-  });
-
+  btnPlay.addEventListener('click', playMorse);
   btnStop.addEventListener('click', () => {
     stopAll();
     status.textContent = '停止';
