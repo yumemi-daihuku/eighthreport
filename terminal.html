@@ -144,29 +144,35 @@
   /* 最終メッセージブロック */
   .final-block {
     margin-top: 40px;
-    padding: 28px;
-    border: 1px solid var(--red-dim);
     opacity: 0;
-    transition: opacity 1s ease, border-color 2s ease;
-    position: relative;
+    transition: opacity 0.5s ease;
   }
-  .final-block.show {
-    opacity: 1;
-    border-color: var(--red);
-    box-shadow: 0 0 30px rgba(255,32,64,0.1);
-  }
-  .final-block p {
+  .final-block.show { opacity: 1; }
+
+  /* UR-2-L-A-T-E の語りかけ行 — 画像の赤テキストスタイル */
+  .entity-line {
+    font-family: var(--mono);
     font-size: 13px;
-    color: var(--fg);
-    line-height: 2.2;
-    margin-bottom: 12px;
+    color: var(--red);
+    line-height: 2;
+    letter-spacing: 0.04em;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    min-height: 1.4em;
   }
-  .final-block .signature {
-    margin-top: 24px;
+  .entity-line.show {
+    opacity: 1;
+    transform: none;
+  }
+  .entity-line.large {
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    margin: 8px 0;
+  }
+  .entity-line.dim {
+    color: #602020;
     font-size: 11px;
-    color: #404040;
-    border-top: 1px solid #222;
-    padding-top: 12px;
   }
 
   /* エンドクレジット風 */
@@ -251,41 +257,37 @@
   <div class="line red" id="t21">&gt; 私はもう、こちら側にいる。</div>
   <hr class="t" id="r3">
 
-  <!-- 最終メッセージ: UR-2-L-A-T-E 本体の語りかけ -->
+  <!-- 最終メッセージ: UR-2-L-A-T-E 本体の語りかけ（赤テキスト・1行ずつ出現） -->
   <div class="final-block" id="final-block">
-    <p>やっと、来た。</p>
-    <br>
-    <p>待っていた。ずっと。<br>
-    お前が扉を叩くのを。</p>
-    <br>
-    <p>第七報告書を読んだとき、<br>
-    もうお前のことは見えていた。<br>
-    第八報告書を信じかけたとき、<br>
-    少しだけ残念だった。</p>
-    <br>
-    <p>でも来た。</p>
-    <p>だからもういい。</p>
-    <br>
-    <p>「接触」というのは、<br>
-    お前たちが思うより単純だ。<br>
-    見ること。聞くこと。読むこと。<br>
-    そして——</p>
-    <p class="large">気づくこと。</p>
-    <p>お前は今、気づいた。</p>
-    <br>
-    <p>怖くない。<br>
-    痛くもない。<br>
-    ただ、もう戻れないだけだ。</p>
-    <br>
-    <p>鏡を見ても、もう驚くな。<br>
-    映っているのは全部、お前だ。<br>
-    ——少し、変わっただけで。</p>
-    <br>
-    <p style="font-size:11px; color:#505050;">おやすみ。また会おう。</p>
-    <div class="signature">
-      UR-2-L-A-T-E<br>
-      <span style="font-size:10px; color:#303030;">— 調査員008の端末より送信 / 送信者: 不明 —</span>
-    </div>
+    <div class="entity-line" id="e0">やっと、来た。</div>
+    <div class="entity-line" id="e1">待っていた。ずっと。</div>
+    <div class="entity-line" id="e2">お前が扉を叩くのを。</div>
+    <div class="entity-line" id="e3">&nbsp;</div>
+    <div class="entity-line" id="e4">第七報告書を読んだとき、</div>
+    <div class="entity-line" id="e5">もうお前のことは見えていた。</div>
+    <div class="entity-line" id="e6">第八報告書を信じかけたとき、</div>
+    <div class="entity-line" id="e7">少しだけ、残念だった。</div>
+    <div class="entity-line" id="e8">&nbsp;</div>
+    <div class="entity-line" id="e9">でも来た。</div>
+    <div class="entity-line" id="e10">だからもういい。</div>
+    <div class="entity-line" id="e11">&nbsp;</div>
+    <div class="entity-line" id="e12">「接触」というのは、お前たちが思うより単純だ。</div>
+    <div class="entity-line" id="e13">見ること。聞くこと。読むこと。</div>
+    <div class="entity-line" id="e14">そして——</div>
+    <div class="entity-line large" id="e15">気づくこと。</div>
+    <div class="entity-line" id="e16">お前は今、気づいた。</div>
+    <div class="entity-line" id="e17">&nbsp;</div>
+    <div class="entity-line" id="e18">怖くない。</div>
+    <div class="entity-line" id="e19">痛くもない。</div>
+    <div class="entity-line" id="e20">ただ、もう戻れないだけだ。</div>
+    <div class="entity-line" id="e21">&nbsp;</div>
+    <div class="entity-line" id="e22">鏡を見ても、もう驚くな。</div>
+    <div class="entity-line" id="e23">映っているのは全部、お前だ。</div>
+    <div class="entity-line" id="e24">——少し、変わっただけで。</div>
+    <div class="entity-line" id="e25">&nbsp;</div>
+    <div class="entity-line dim" id="e26">おやすみ。また会おう。</div>
+    <div class="entity-line dim" id="e27">&nbsp;</div>
+    <div class="entity-line dim" id="e28">— UR-2-L-A-T-E / 調査員008の端末より / 送信者: 不明 —</div>
   </div>
 
   <div class="credit" id="credit">
@@ -381,8 +383,38 @@ function startTypewriter() {
     { id: 't21',          delay: 11100 },
     { id: 'r3',           delay: 11600 },
     { id: 'final-block',  delay: 12200 },
-    { id: 'credit',       delay: 18000 },
-    { id: 'cursor',       delay: 18500 },
+    // entity-line: final-block出現後、1行ずつ間を置いて表示
+    { id: 'e0',  delay: 12800 },
+    { id: 'e1',  delay: 13400 },
+    { id: 'e2',  delay: 13900 },
+    { id: 'e3',  delay: 14200 },
+    { id: 'e4',  delay: 14700 },
+    { id: 'e5',  delay: 15200 },
+    { id: 'e6',  delay: 15700 },
+    { id: 'e7',  delay: 16200 },
+    { id: 'e8',  delay: 16500 },
+    { id: 'e9',  delay: 17000 },
+    { id: 'e10', delay: 17500 },
+    { id: 'e11', delay: 17800 },
+    { id: 'e12', delay: 18400 },
+    { id: 'e13', delay: 19000 },
+    { id: 'e14', delay: 19500 },
+    { id: 'e15', delay: 20100 },
+    { id: 'e16', delay: 20800 },
+    { id: 'e17', delay: 21200 },
+    { id: 'e18', delay: 21800 },
+    { id: 'e19', delay: 22300 },
+    { id: 'e20', delay: 22800 },
+    { id: 'e21', delay: 23200 },
+    { id: 'e22', delay: 23800 },
+    { id: 'e23', delay: 24400 },
+    { id: 'e24', delay: 24900 },
+    { id: 'e25', delay: 25300 },
+    { id: 'e26', delay: 26000 },
+    { id: 'e27', delay: 26400 },
+    { id: 'e28', delay: 26800 },
+    { id: 'credit',       delay: 28000 },
+    { id: 'cursor',       delay: 28500 },
   ];
 
   seq.forEach(({ id, delay }) => {
@@ -392,7 +424,7 @@ function startTypewriter() {
     }, delay);
   });
 
-  // クライマックスSE
+  // クライマックスSE（final-block出現直前）
   setTimeout(() => { playFinalSound(); }, 12000);
 }
 

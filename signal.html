@@ -48,12 +48,15 @@
     padding: 60px 30px 100px;
   }
 
-  /* 「鏡」文字フラッシュ — JSで .mirror-flash クラスを一時的に付与 */
+  /* 「鏡」文字 — 通常は水平反転（鏡文字）、フラッシュ時に正像に戻る */
   .mirror-word {
-    transition: color 0.15s ease, background 0.15s ease;
+    display: inline-block;
+    transform: scaleX(-1);          /* 平常時は鏡文字 */
+    transition: transform 0.1s ease, color 0.1s ease, background 0.1s ease;
     border-radius: 2px;
   }
   .mirror-word.mirror-flash {
+    transform: scaleX(1);           /* フラッシュ時だけ正像 */
     color: var(--bg);
     background: var(--red);
   }
@@ -155,16 +158,14 @@
     display: none;
   }
 
-  /* terminal リンク */
+  /* terminal リンク — 最初から表示 */
   .terminal-door {
-    display: none;
     margin-top: 40px;
     padding: 24px;
     border: 1px solid var(--red);
     text-align: center;
     animation: doorPulse 2s ease infinite;
   }
-  .terminal-door.open { display: block; }
 
   @keyframes doorPulse {
     0%, 100% { border-color: var(--red); box-shadow: 0 0 10px rgba(192,64,96,0.2); }
@@ -253,13 +254,11 @@
     <p>それをそのまま terminal に持っていけ。</p>
   </div>
 
-  <!-- 「鏡」フラッシュ後に一定時間で出現する最終扉 -->
+  <!-- 最初から表示されているterminal扉 -->
   <div class="terminal-door" id="terminal-door">
-    <p>— <span class="mirror-word">鏡</span>が答えを返した —</p>
-    <p>terminal へのパスワードは:</p>
-    <div class="pass-display" id="pass-display">MIRROR</div>
-    <p style="font-size:11px; margin-bottom: 20px;">最後の扉:</p>
-    <a href="terminal.html">▶ terminal.html を開く</a>
+    <p>次の扉:</p>
+    <a href="terminal.html">▶ terminal.html</a>
+    <p style="margin-top:16px; font-size:11px;">— 鍵は、このページの中にある —</p>
   </div>
 
   <div class="page-footer">signal.html — ██████機関 非公式記録 — 複製禁止</div>
@@ -269,43 +268,28 @@
 <script>
 // ─────────────────────────────────────
 // 「鏡」文字フラッシュ
-// 一定間隔でページ内の全 .mirror-word を赤反転させる。
-// 3回フラッシュした後に terminal への扉を出現させる。
+// 通常は鏡文字（scaleX(-1)）、フラッシュ時だけ正像+赤背景になる。
+// 扉は最初から表示済みなのでカウント不要。
 // ─────────────────────────────────────
 (function initMirrorFlash() {
-  const words  = document.querySelectorAll('.mirror-word');
-  const door   = document.getElementById('terminal-door');
-  const INTERVAL = 7000;  // フラッシュ間隔（ms）
-  const FLASH_DUR = 600;  // 赤反転の持続時間（ms）
-  let flashCount = 0;
+  const words    = document.querySelectorAll('.mirror-word');
+  const INTERVAL = 7000;
+  const FLASH_DUR = 500;
 
   function flash() {
-    // 全「鏡」を同時に赤反転
     words.forEach(w => w.classList.add('mirror-flash'));
     playFlashSound();
-
     setTimeout(() => {
       words.forEach(w => w.classList.remove('mirror-flash'));
-
-      flashCount++;
-      // 3回フラッシュしたら扉を開く
-      if (flashCount >= 3 && !door.classList.contains('open')) {
-        setTimeout(() => {
-          door.classList.add('open');
-          door.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 800);
-      }
     }, FLASH_DUR);
   }
 
-  // 最初のフラッシュは少し待ってから開始
   setTimeout(() => {
     flash();
     setInterval(flash, INTERVAL);
   }, 3000);
 })();
 
-// フラッシュ時のSE（短い低音パルス）
 function playFlashSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -324,16 +308,15 @@ function playFlashSound() {
 }
 
 // ─────────────────────────────────────
-// アンビエントSE（ページ訪問時）
+// アンビエントSE
 // ─────────────────────────────────────
 (function initAmbient() {
   let started = false;
-
   function start() {
     if (started) return;
     started = true;
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
       const osc  = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
@@ -347,7 +330,6 @@ function playFlashSound() {
       osc.stop(ctx.currentTime + 15);
     } catch(e) {}
   }
-
   document.addEventListener('click', start, { once: true });
   document.addEventListener('scroll', start, { once: true });
 })();
