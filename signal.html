@@ -48,78 +48,14 @@
     padding: 60px 30px 100px;
   }
 
-  /* 鏡エフェクト: メインビジュアル */
-  .mirror-frame {
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto 48px;
-    border: 1px solid var(--fg-dim);
-    position: relative;
-    overflow: hidden;
-    background: #0a080f;
-    aspect-ratio: 3/4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
+  /* 「鏡」文字フラッシュ — JSで .mirror-flash クラスを一時的に付与 */
+  .mirror-word {
+    transition: color 0.15s ease, background 0.15s ease;
+    border-radius: 2px;
   }
-
-  .mirror-frame::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      135deg,
-      rgba(100, 80, 180, 0.08) 0%,
-      transparent 40%,
-      rgba(100, 80, 180, 0.04) 100%
-    );
-    pointer-events: none;
-  }
-
-  .mirror-frame::after {
-    content: '鏡を見ろ';
-    font-family: var(--serif);
-    font-size: 12px;
-    color: var(--fg-dim);
-    letter-spacing: 0.2em;
-    position: absolute;
-    bottom: 12px;
-    width: 100%;
-    text-align: center;
-  }
-
-  /* 鏡の中のテキスト（反転） */
-  .mirror-text {
-    color: var(--accent);
-    font-size: 18px;
-    letter-spacing: 0.15em;
-    transform: scaleX(-1); /* 鏡文字 */
-    opacity: 0.4;
-    transition: opacity 0.5s, color 0.5s;
-    text-align: center;
-    line-height: 1.6;
-    padding: 20px;
-    word-break: break-all;
-    pointer-events: none;
-  }
-
-  /* ホバー / クリックで鮮明になる */
-  .mirror-frame:hover .mirror-text,
-  .mirror-frame.activated .mirror-text {
-    opacity: 1;
-    color: var(--fg-bright);
-  }
-
-  .mirror-frame.activated .mirror-text {
-    transform: scaleX(1); /* 正像に戻る */
-    color: var(--red);
-    animation: pulse 2s ease infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+  .mirror-word.mirror-flash {
+    color: var(--bg);
+    background: var(--red);
   }
 
   /* テキストコンテンツ */
@@ -291,25 +227,14 @@
 
   <h1>signal.html — <span class="glitch" data-text="未分類">未分類</span> / UNCLASSIFIED</h1>
 
-  <!-- 鏡フレーム -->
-  <div class="mirror-frame" id="mirror-frame">
-    <!-- 鏡文字 — 反転されているので通常は読みにくい。クリックで正像になる -->
-    <div class="mirror-text" id="mirror-text">MIRROR<br>———<br>次の鍵</div>
-  </div>
-
   <div class="section-title">▎ このファイルについて</div>
-
-  <p>
-    あなたが持っているファイルが何か、もうわかっているはずだ。<br>
-    第八報告書は嘘だ。終結なんてしていない。
-  </p>
 
   <div class="record" data-label="RECORD: 流田千尋（006）— 未公開メモ">
     <p>流田千尋は行方不明になる前日、研究施設に手紙を残していた。</p>
     <p>その手紙は担当官によって「精神的不安定による妄言」として処理され、記録から除外された。</p>
     <p class="highlight">内容（複製）：</p>
     <p class="highlight">
-      「あれは鏡を通して来る。<br>
+      「あれは<span class="mirror-word">鏡</span>を通して来る。<br>
       再現サイトを作った瞬間、向こうに扉を開けたのと同じだ。<br>
       制圧したと思っているなら、もう一度考えろ。<br>
       あれが消えるはずがない。あれはもともと、ここにいなかったんだから。」
@@ -317,20 +242,20 @@
   </div>
 
   <p>
-    SIGNAL_DATA_02 の逆再生で聴こえた言葉——<br>
+    SIGNAL_DATA_02 の信号を解読した言葉——<br>
     「signal.html にある」というのは、このページのことではない。<br>
     このページにある<strong>言葉</strong>のことだ。
   </p>
 
   <div class="record" data-label="HINT">
-    <p>鏡を見ろ。</p>
-    <p>鏡の中にしか映らないものがある。</p>
+    <p><span class="mirror-word">鏡</span>を見ろ。</p>
+    <p><span class="mirror-word">鏡</span>の中にしか映らないものがある。</p>
     <p>それをそのまま terminal に持っていけ。</p>
   </div>
 
-  <!-- 鏡クリック後に出現する最終扉 -->
+  <!-- 「鏡」フラッシュ後に一定時間で出現する最終扉 -->
   <div class="terminal-door" id="terminal-door">
-    <p>— 鏡が正像を返した —</p>
+    <p>— <span class="mirror-word">鏡</span>が答えを返した —</p>
     <p>terminal へのパスワードは:</p>
     <div class="pass-display" id="pass-display">MIRROR</div>
     <p style="font-size:11px; margin-bottom: 20px;">最後の扉:</p>
@@ -343,64 +268,58 @@
 
 <script>
 // ─────────────────────────────────────
-// 鏡インタラクション
-// クリック → 正像表示 → パスワード扉出現
+// 「鏡」文字フラッシュ
+// 一定間隔でページ内の全 .mirror-word を赤反転させる。
+// 3回フラッシュした後に terminal への扉を出現させる。
 // ─────────────────────────────────────
-(function initMirror() {
-  const frame = document.getElementById('mirror-frame');
-  const text  = document.getElementById('mirror-text');
-  const door  = document.getElementById('terminal-door');
-  let activated = false;
+(function initMirrorFlash() {
+  const words  = document.querySelectorAll('.mirror-word');
+  const door   = document.getElementById('terminal-door');
+  const INTERVAL = 7000;  // フラッシュ間隔（ms）
+  const FLASH_DUR = 600;  // 赤反転の持続時間（ms）
+  let flashCount = 0;
 
-  frame.addEventListener('click', () => {
-    if (activated) return;
-    activated = true;
-    frame.classList.add('activated');
+  function flash() {
+    // 全「鏡」を同時に赤反転
+    words.forEach(w => w.classList.add('mirror-flash'));
+    playFlashSound();
 
-    // 不穏SE
-    playMirrorSound();
-
-    // グリッチ演出後に扉を開く
     setTimeout(() => {
-      door.classList.add('open');
-      door.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 1200);
-  });
+      words.forEach(w => w.classList.remove('mirror-flash'));
+
+      flashCount++;
+      // 3回フラッシュしたら扉を開く
+      if (flashCount >= 3 && !door.classList.contains('open')) {
+        setTimeout(() => {
+          door.classList.add('open');
+          door.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 800);
+      }
+    }, FLASH_DUR);
+  }
+
+  // 最初のフラッシュは少し待ってから開始
+  setTimeout(() => {
+    flash();
+    setInterval(flash, INTERVAL);
+  }, 3000);
 })();
 
-// 鏡クリック時のSE
-function playMirrorSound() {
+// フラッシュ時のSE（短い低音パルス）
+function playFlashSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-
-    // ガラスが割れる/ひびが入るような音
-    const bufLen = ctx.sampleRate * 1.5;
-    const buffer = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    for (let i = 0; i < bufLen; i++) {
-      const t = i / ctx.sampleRate;
-      // 高周波ノイズ + 減衰
-      data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 5) * 0.3;
-      // 低周波共鳴
-      data[i] += Math.sin(2 * Math.PI * 200 * t) * Math.exp(-t * 3) * 0.1;
-    }
-
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-
-    const filter = ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.value = 3000;
-    filter.Q.value = 0.5;
-
+    const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
-    gain.gain.value = 0.5;
-
-    source.connect(filter);
-    filter.connect(gain);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(180, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.4);
+    gain.gain.setValueAtTime(0.07, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.connect(gain);
     gain.connect(ctx.destination);
-    source.start();
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
   } catch(e) {}
 }
 
@@ -413,12 +332,9 @@ function playMirrorSound() {
   function start() {
     if (started) return;
     started = true;
-
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-
-      // ドローン
-      const osc = ctx.createOscillator();
+      const osc  = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
       osc.frequency.value = 55;
