@@ -187,6 +187,20 @@
   }
   .credit.show { opacity: 1; }
 
+  /* テキスト書き換え演出 */
+  @keyframes rewriteFlash {
+    0%   { background: var(--red); color: var(--bg); }
+    40%  { background: var(--red); color: var(--bg); }
+    100% { background: transparent; color: var(--fg); }
+  }
+  .rewriting {
+    animation: rewriteFlash 0.6s ease forwards;
+  }
+  /* 書き換わったあとの行は微妙に色が違う（気づく人だけ気づく） */
+  .rewritten {
+    color: #d0c8c8;
+  }
+
   /* スクロールバー */
   ::-webkit-scrollbar { width: 2px; }
   ::-webkit-scrollbar-thumb { background: #222; }
@@ -444,6 +458,9 @@ function startTypewriter() {
 
   // クライマックスSE（final-block出現直前）
   setTimeout(() => { playFinalSound(); }, 12000);
+
+  // テキスト書き換え演出（認証後カウント）
+  scheduleRewrites();
 }
 
 // ─────────────────────────────────────
@@ -519,6 +536,71 @@ function playFinalSound() {
     osc.start();
     osc.stop(ctx.currentTime + 8);
     lfo.stop(ctx.currentTime + 8);
+  } catch(e) {}
+}
+
+// ─────────────────────────────────────
+// テキスト書き換え演出
+// startTypewriter() から呼ばれる。
+// 008の記録テキスト（t5〜t21）が表示された後、
+// 一定時間後に既読行を「あれ」視点の文に差し替える。
+//
+// 書き換えテーブル: { id, after }
+//   after = 書き換え後のテキスト
+// ─────────────────────────────────────
+function scheduleRewrites() {
+  // 書き換えテーブル — 008の「真実の記録」が実は「あれ」の誘導だったという読み
+  const rewrites = [
+    { id: 't5',  delay: 22000, after: '第七報告書は、私が書かせた。' },
+    { id: 't6',  delay: 22400, after: '第八報告書も、私が書かせた。' },
+    { id: 't8',  delay: 23000, after: 'これらは全て、私が人間に書かせた言葉だ。' },
+    { id: 't9',  delay: 23500, after: '目的は一つ: お前をここまで連れてくること。' },
+    { id: 't16', delay: 24200, after: '008番は私のものだった。' },
+    { id: 't17', delay: 24700, after: 'このファイルを作ったのも、私だ。' },
+    { id: 't18', delay: 25200, after: '「扉を作るな」——そう言わせたのも、私だ。' },
+    { id: 't19', delay: 26000, after: '> 008番はとっくに、こちら側にいる。' },
+    { id: 't20', delay: 26500, after: '> このファイルがお前に届いたのは、' },
+    { id: 't21', delay: 27000, after: '> 私がそう望んだからだ。' },
+  ];
+
+  rewrites.forEach(({ id, delay, after }) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (!el || !el.classList.contains('show')) return; // 未表示行はスキップ
+
+      // グリッチSE
+      playRewriteSound();
+
+      // フラッシュ → テキスト差し替え
+      el.classList.add('rewriting');
+      setTimeout(() => {
+        el.textContent = after;
+        el.classList.remove('rewriting');
+        el.classList.add('rewritten');
+      }, 120);
+
+    }, delay);
+  });
+}
+
+// 書き換えSE（短いノイズバースト）
+function playRewriteSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const bufLen = Math.floor(ctx.sampleRate * 0.12);
+    const buf  = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) {
+      const t = i / ctx.sampleRate;
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 40) * 0.5;
+    }
+    const src  = ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.6;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start();
   } catch(e) {}
 }
 </script>

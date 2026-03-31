@@ -202,6 +202,15 @@
     color: var(--bg);
   }
 
+  /* テキスト書き換え演出 */
+  @keyframes rewriteFlash {
+    0%   { background: var(--red); color: var(--bg); }
+    40%  { background: var(--red); color: var(--bg); }
+    100% { background: transparent; color: var(--fg-bright); }
+  }
+  .rewriting { animation: rewriteFlash 0.6s ease forwards; }
+  .rewritten  { color: var(--fg-bright); }
+
   /* フッター */
   .page-footer {
     margin-top: 60px;
@@ -234,12 +243,13 @@
     <p>流田千尋は行方不明になる前日、研究施設に手紙を残していた。</p>
     <p>その手紙は担当官によって「精神的不安定による妄言」として処理され、記録から除外された。</p>
     <p class="highlight">内容（複製）：</p>
-    <p class="highlight">
+    <p class="highlight" id="lagarta-quote">
       「あれは<span class="mirror-word">鏡</span>を通して来る。<br>
       再現サイトを作った瞬間、向こうに扉を開けたのと同じだ。<br>
       制圧したと思っているなら、もう一度考えろ。<br>
       あれが消えるはずがない。あれはもともと、ここにいなかったんだから。」
     </p>
+    <p class="dim" id="lagarta-note" style="font-size:11px; color:var(--fg-dim); margin-top:8px;">記録者注: 流田の筆跡に一致。本人作成と断定。</p>
   </div>
 
   <p>
@@ -306,6 +316,65 @@ function playFlashSound() {
     osc.stop(ctx.currentTime + 0.4);
   } catch(e) {}
 }
+
+// ─────────────────────────────────────
+// テキスト書き換え演出
+// ページ表示45秒後、流田のメモ引用が書き換わる。
+// 「妄言」として処理されたのではなく、書いた時点で
+// すでに「あれ」が流田を通して書いていた、という示唆。
+// ─────────────────────────────────────
+(function initRewrite() {
+  setTimeout(() => {
+    const quote = document.getElementById('lagarta-quote');
+    const note  = document.getElementById('lagarta-note');
+    if (!quote) return;
+
+    playRewriteSound();
+
+    quote.classList.add('rewriting');
+    setTimeout(() => {
+      quote.innerHTML =
+        '「来てくれた。<br>' +
+        'ずっと待っていた。<br>' +
+        'この手紙が読まれる日を。」';
+      quote.classList.remove('rewriting');
+      quote.classList.add('rewritten');
+
+      // 注釈も書き換える（少し遅らせて）
+      setTimeout(() => {
+        if (!note) return;
+        playRewriteSound();
+        note.classList.add('rewriting');
+        setTimeout(() => {
+          note.textContent = '記録者注: 流田の筆跡に一致——だが、書いたのは流田ではない。';
+          note.style.color = 'var(--red)';
+          note.classList.remove('rewriting');
+        }, 120);
+      }, 800);
+
+    }, 120);
+  }, 45000); // 45秒後
+
+  function playRewriteSound() {
+    try {
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+      const bufLen = Math.floor(ctx.sampleRate * 0.15);
+      const buf  = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufLen; i++) {
+        const t = i / ctx.sampleRate;
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-t * 30) * 0.5;
+      }
+      const src  = ctx.createBufferSource();
+      src.buffer = buf;
+      const gain = ctx.createGain();
+      gain.gain.value = 0.7;
+      src.connect(gain);
+      gain.connect(ctx.destination);
+      src.start();
+    } catch(e) {}
+  }
+})();
 
 // ─────────────────────────────────────
 // アンビエントSE
