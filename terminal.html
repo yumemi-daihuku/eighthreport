@@ -265,23 +265,26 @@
     <div class="entity-line" id="e3">待っていた。ずっと。</div>
     <div class="entity-line" id="e4">お前が扉を叩くのを。</div>
     <div class="entity-line" id="e5">&nbsp;</div>
-    <div class="entity-line" id="e6">「接触」というのは、お前たちが思うより単純だ。</div>
-    <div class="entity-line" id="e7">見ること。聞くこと。読むこと。</div>
-    <div class="entity-line" id="e8">そして——</div>
-    <div class="entity-line large" id="e9">気づくこと。</div>
-    <div class="entity-line" id="e10">お前は今、気づいた。</div>
-    <div class="entity-line" id="e11">&nbsp;</div>
-    <div class="entity-line" id="e12">怖くない。</div>
-    <div class="entity-line" id="e13">痛くもない。</div>
-    <div class="entity-line" id="e14">ただ、もう戻れないだけだ。</div>
-    <div class="entity-line" id="e15">&nbsp;</div>
-    <div class="entity-line" id="e16">鏡を見ても、もう驚くな。</div>
-    <div class="entity-line" id="e17">映っているのは全部、お前だ。</div>
-    <div class="entity-line" id="e18">——少し、変わっただけで。</div>
-    <div class="entity-line" id="e19">&nbsp;</div>
-    <div class="entity-line dim" id="e20">おやすみ。また会おう。</div>
-    <div class="entity-line dim" id="e21">&nbsp;</div>
-    <div class="entity-line dim" id="e22">— UR-2-L-A-T-E / 調査員008の端末より / 送信者: 不明 —</div>
+    <div class="entity-line" id="e6" style="display:none"><!-- 位置情報行: JSで差し込む --></div>
+    <div class="entity-line" id="e6b" style="display:none"><!-- 位置情報行2: JSで差し込む --></div>
+    <div class="entity-line" id="e7">&nbsp;</div>
+    <div class="entity-line" id="e8">「接触」というのは、お前たちが思うより単純だ。</div>
+    <div class="entity-line" id="e9">見ること。聞くこと。読むこと。</div>
+    <div class="entity-line" id="e10">そして——</div>
+    <div class="entity-line large" id="e11">気づくこと。</div>
+    <div class="entity-line" id="e12">お前は今、気づいた。</div>
+    <div class="entity-line" id="e13">&nbsp;</div>
+    <div class="entity-line" id="e14">怖くない。</div>
+    <div class="entity-line" id="e15">痛くもない。</div>
+    <div class="entity-line" id="e16">ただ、もう戻れないだけだ。</div>
+    <div class="entity-line" id="e17">&nbsp;</div>
+    <div class="entity-line" id="e18">鏡を見ても、もう驚くな。</div>
+    <div class="entity-line" id="e19">映っているのは全部、お前だ。</div>
+    <div class="entity-line" id="e20">——少し、変わっただけで。</div>
+    <div class="entity-line" id="e21">&nbsp;</div>
+    <div class="entity-line dim" id="e22">おやすみ。また会おう。</div>
+    <div class="entity-line dim" id="e23">&nbsp;</div>
+    <div class="entity-line dim" id="e24">— UR-2-L-A-T-E / 調査員008の端末より / 送信者: 不明 —</div>
   </div>
 
   <div class="credit" id="credit">
@@ -346,6 +349,31 @@
 })();
 
 // ─────────────────────────────────────
+// 位置情報をlocalStorageから読み込み、
+// e6 / e6b の内容とdisplayを事前に設定する。
+// タイプライターが表示するタイミングまでに準備しておく。
+// ─────────────────────────────────────
+(function prepareLocation() {
+  const loc  = localStorage.getItem('ur2late_location') || '';
+  const e6   = document.getElementById('e6');
+  const e6b  = document.getElementById('e6b');
+
+  if (loc) {
+    // 位置情報あり: 地名を差し込んで表示対象にする
+    e6.textContent  = `${loc}から、来たのか。`;
+    e6b.textContent = '思ったより近い。';
+  } else {
+    // 位置情報なし（拒否 or チェッカー未使用）
+    e6.textContent  = 'どこから来たかは、わからなかった。';
+    e6b.textContent = 'だが、お前がここにいることはわかっている。';
+  }
+
+  // display:none を解除してタイプライターに渡せる状態にする
+  e6.style.display  = '';
+  e6b.style.display = '';
+})();
+
+// ─────────────────────────────────────
 // タイプライター: 順番に各要素を表示
 // ─────────────────────────────────────
 function startTypewriter() {
@@ -383,25 +411,28 @@ function startTypewriter() {
     { id: 'e3',  delay: 14500 },
     { id: 'e4',  delay: 15000 },
     { id: 'e5',  delay: 15400 },
-    { id: 'e6',  delay: 16000 },
-    { id: 'e7',  delay: 16500 },
-    { id: 'e8',  delay: 17000 },
-    { id: 'e9',  delay: 17600 },
-    { id: 'e10', delay: 18300 },
-    { id: 'e11', delay: 18700 },
-    { id: 'e12', delay: 19300 },
-    { id: 'e13', delay: 19800 },
-    { id: 'e14', delay: 20300 },
-    { id: 'e15', delay: 20700 },
-    { id: 'e16', delay: 21300 },
-    { id: 'e17', delay: 21800 },
-    { id: 'e18', delay: 22300 },
-    { id: 'e19', delay: 22700 },
-    { id: 'e20', delay: 23400 },
-    { id: 'e21', delay: 23800 },
-    { id: 'e22', delay: 24200 },
-    { id: 'credit',       delay: 25400 },
-    { id: 'cursor',       delay: 25900 },
+    { id: 'e6',  delay: 16000 },  // 位置情報行（内容はJS側で設定済み）
+    { id: 'e6b', delay: 16600 },  // 位置情報行2
+    { id: 'e7',  delay: 17000 },
+    { id: 'e8',  delay: 17600 },
+    { id: 'e9',  delay: 18100 },
+    { id: 'e10', delay: 18600 },
+    { id: 'e11', delay: 19200 },
+    { id: 'e12', delay: 19900 },
+    { id: 'e13', delay: 20300 },
+    { id: 'e14', delay: 20900 },
+    { id: 'e15', delay: 21400 },
+    { id: 'e16', delay: 21900 },
+    { id: 'e17', delay: 22300 },
+    { id: 'e18', delay: 22900 },
+    { id: 'e19', delay: 23400 },
+    { id: 'e20', delay: 23900 },
+    { id: 'e21', delay: 24300 },
+    { id: 'e22', delay: 25000 },
+    { id: 'e23', delay: 25400 },
+    { id: 'e24', delay: 25800 },
+    { id: 'credit',       delay: 27000 },
+    { id: 'cursor',       delay: 27500 },
   ];
 
   seq.forEach(({ id, delay }) => {

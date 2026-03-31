@@ -355,6 +355,61 @@
     background: var(--red);
     color: transparent;
   }
+
+  /* 危険度チェッカー */
+  .checker-box {
+    margin: 24px 0;
+    border: 1px solid var(--rule);
+    padding: 20px 24px;
+    background: rgba(0,0,0,0.02);
+  }
+  .checker-box .checker-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink-ghost);
+    margin-bottom: 14px;
+  }
+  .checker-btn {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--ink-faint);
+    border: 1px solid var(--rule);
+    padding: 7px 20px;
+    cursor: pointer;
+    background: transparent;
+    transition: all 0.2s;
+  }
+  .checker-btn:hover {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+  .checker-result {
+    display: none;
+    margin-top: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 2;
+  }
+  .checker-result.show { display: block; }
+  .checker-result .loc-label {
+    color: var(--ink-ghost);
+    letter-spacing: 0.1em;
+  }
+  .checker-result .loc-value {
+    color: var(--ink-faint);
+  }
+  .checker-result .verdict {
+    margin-top: 8px;
+    color: var(--stamp-green);
+    letter-spacing: 0.05em;
+  }
+  .checker-result .verdict-denied {
+    color: var(--ink-ghost);
+  }
 </style>
 </head>
 <body>
@@ -526,6 +581,21 @@
     再現サイト閲覧後に体調の異変を感じた場合は、<span class="redacted" title="感じているのなら、もう遅い">██████相談窓口</span>まで連絡されたい。
     ただし、そのような事例は現在まで<span class="cipher-num">0</span>件である。
   </p>
+
+  <!-- 危険度チェッカー -->
+  <div class="checker-box">
+    <div class="checker-label">▎ 区域危険度チェッカー — ██████機関 提供</div>
+    <p style="font-size:12px; color:var(--ink-faint); margin-bottom:14px;">
+      あなたの現在地が事案の影響区域に含まれるかどうかを確認できます。<br>
+      チェックには位置情報の取得が必要です。
+    </p>
+    <button class="checker-btn" id="checker-btn">現在地を確認する</button>
+    <div class="checker-result" id="checker-result">
+      <div class="loc-label">取得した位置情報 :</div>
+      <div class="loc-value" id="loc-value">——</div>
+      <div class="verdict" id="checker-verdict">——</div>
+    </div>
+  </div>
 
   <hr class="rule">
 
@@ -774,6 +844,86 @@ function playDenySound() {
       setTimeout(() => { title.style.animation = ''; }, 300);
     }
   }, 5000);
+})();
+
+// ─────────────────────────────────────
+// 危険度チェッカー
+// Geolocation API でユーザーの許可を得て位置情報を取得し、
+// Nominatim（OpenStreetMap）で逆ジオコーディングして地名を表示。
+// 取得した地名は localStorage に保存し、terminal.html でも利用する。
+// ─────────────────────────────────────
+(function initChecker() {
+  const btn     = document.getElementById('checker-btn');
+  const result  = document.getElementById('checker-result');
+  const locVal  = document.getElementById('loc-value');
+  const verdict = document.getElementById('checker-verdict');
+
+  if (!btn) return;
+
+  btn.addEventListener('click', () => {
+    // Geolocation 非対応環境
+    if (!navigator.geolocation) {
+      locVal.textContent = '位置情報の取得に対応していません。';
+      verdict.textContent = '危険度判定: 不可';
+      verdict.className = 'verdict-denied';
+      result.classList.add('show');
+      return;
+    }
+
+    btn.textContent = '取得中...';
+    btn.disabled = true;
+
+    // ブラウザが許可ダイアログを出す
+    navigator.geolocation.getCurrentPosition(
+      // 許可された場合
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+
+        try {
+          // Nominatim で逆ジオコーディング（市区町村レベルまで）
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=ja`,
+            { headers: { 'Accept-Language': 'ja' } }
+          );
+          const data = await res.json();
+          const addr = data.address || {};
+
+          // 都道府県・市区町村のみ使用（番地以下は無視）
+          const prefecture = addr.state || addr.province || '';
+          const city       = addr.city || addr.town || addr.village || addr.county || '';
+          const locationStr = [prefecture, city].filter(Boolean).join(' ') || '不明な区域';
+
+          locVal.textContent = locationStr;
+          verdict.textContent = `あなたの区域（${locationStr}）は危険ではありません。`;
+          verdict.className = 'verdict';
+
+          // terminal.html で使えるよう保存
+          localStorage.setItem('ur2late_location', locationStr);
+
+        } catch {
+          // ネットワークエラー等でジオコーディング失敗
+          locVal.textContent = '位置情報は取得できましたが、区域名の解決に失敗しました。';
+          verdict.textContent = '危険度判定: 保留';
+          verdict.className = 'verdict-denied';
+          localStorage.setItem('ur2late_location', '');
+        }
+
+        result.classList.add('show');
+        btn.textContent = '取得完了';
+      },
+      // 拒否・失敗した場合
+      () => {
+        locVal.textContent = '位置情報の取得が許可されませんでした。';
+        verdict.textContent = '危険度判定: 実施不可　— 区域の安全は保証されません。';
+        verdict.className = 'verdict-denied';
+        result.classList.add('show');
+        btn.textContent = '現在地を確認する';
+        btn.disabled = false;
+        localStorage.setItem('ur2late_location', '');
+      },
+      { timeout: 10000 }
+    );
+  });
 })();
 </script>
 </body>
